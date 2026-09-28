@@ -1,0 +1,27 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Backend: Node Server",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/server/index.js",
+      "cwd": "${workspaceFolder}/server",
+      "restart": true,
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Frontend: Chrome / Edge",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}/frontend"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Full Stack (Server + Client)",
+      "configurations": ["Backend: Node Server", "Frontend: Chrome / Edge"]
+    }
+  ]
+}

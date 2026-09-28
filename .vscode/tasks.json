@@ -1,0 +1,53 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Fullstack Dev (Frontend + Backend)",
+      "type": "shell",
+      "command": "npm run dev",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "Run API Integration Tests",
+      "type": "shell",
+      "command": "npm run test",
+      "problemMatcher": [],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Build Frontend Production Bundle",
+      "type": "shell",
+      "command": "npm run build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Start Express Backend Server",
+      "type": "shell",
+      "command": "node index.js",
+      "options": {
+        "cwd": "${workspaceFolder}/server"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Start Vite Frontend Dev Server",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "problemMatcher": []
+    }
+  ]
+}
