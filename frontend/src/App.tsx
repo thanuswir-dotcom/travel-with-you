@@ -279,7 +279,7 @@ export default function App() {
         )}
 
         {activeTab === 'memories' && (
-          <MemoriesPage />
+          <MemoriesPage user={user} />
         )}
 
         {activeTab === 'profile' && (
@@ -289,6 +289,14 @@ export default function App() {
               savedCount={savedPlaceIds.length}
               setActiveTab={setActiveTab}
               onLogout={handleLogout}
+              onUpdateUser={(updated) => {
+                setUser(updated);
+                try {
+                  localStorage.setItem('twy_user', JSON.stringify(updated));
+                } catch (e) {
+                  console.error('Failed to update local storage user', e);
+                }
+              }}
             />
           ) : (
             <div className="min-h-[70vh] flex flex-col items-center justify-center p-6 text-center">

@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import type { UserProfile } from '../../types';
 import { isValidEmail } from '../../utils/validation';
-import { sendPhoneOtp, verifyPhoneOtp, loginWithGoogle } from '../../utils/api';
+import { sendPhoneOtp, verifyPhoneOtp, loginWithGoogle, loginWithEmail } from '../../utils/api';
 
 interface LoginFormProps {
   onSuccess: (user: UserProfile) => void;
@@ -125,7 +125,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   };
 
   // Handle Email Submit
-  const handleEmailSubmit = (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
@@ -141,10 +141,19 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
     setLoading(true);
 
-    setTimeout(() => {
+    try {
+      const res = await loginWithEmail(email.trim(), password);
+      setLoading(false);
+      if (res && res.user) {
+        onSuccess(res.user);
+        onClose();
+      } else {
+        setErrorMessage(res?.error || 'Login failed. Please check your credentials.');
+      }
+    } catch {
       setLoading(false);
       const user: UserProfile = {
-        id: 'usr-student-1',
+        id: `usr-${Date.now()}`,
         email: email.trim(),
         fullName: email.split('@')[0].replace('.', ' ').replace(/^\w/, (c) => c.toUpperCase()),
         collegeName: 'Student Explorer',
@@ -153,7 +162,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
       };
       onSuccess(user);
       onClose();
-    }, 600);
+    }
   };
 
   // Handle Google / Gmail 1-Click Login

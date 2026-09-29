@@ -1,7 +1,9 @@
-import React, { useState, useRef } from 'react';
-import { Camera, Plus, MapPin, Calendar, Heart, Trash2, Image, BookOpen, X, Sparkles } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Camera, Plus, MapPin, Calendar, Heart, Trash2, Image, BookOpen, X, Sparkles, User, Tag } from 'lucide-react';
+import type { UserProfile } from '../types';
+import { createMemoryBackend, fetchMemoriesBackend } from '../utils/api';
 
-interface Memory {
+export interface Memory {
   id: string;
   title: string;
   place: string;
@@ -10,43 +12,84 @@ interface Memory {
   imageUrl: string;
   liked: boolean;
   tags: string[];
+  userName?: string;
+  userId?: string;
 }
 
-const SAMPLE_MEMORIES: Memory[] = [
+interface MemoriesPageProps {
+  user?: UserProfile | null;
+}
+
+const PAN_INDIA_MEMORIES: Memory[] = [
   {
     id: 'm1',
-    title: 'Sunrise at Nandi Hills 🌅',
-    place: 'Nandi Hills, Chikkaballapur',
-    date: '2026-09-15',
-    note: 'Left at 4 AM with 5 friends. The mist was insane and we literally cried at the view. 10/10 would do again!',
-    imageUrl: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=800&q=80',
+    title: 'Lepakshi Monolith & Hanging Pillar 🛕',
+    place: 'Lepakshi, Sri Sathya Sai District, AP',
+    date: '2026-09-24',
+    note: 'College weekend expedition from campus! Stood beneath the colossal monolithic Nandi and tested passing cloth under the hanging pillar. Outstanding Vijayanagara stone carvings and zero ticket cost for students.',
+    imageUrl: 'https://images.unsplash.com/photo-1590050752117-238cb0fb12b1?auto=format&fit=crop&w=800&q=80',
     liked: true,
-    tags: ['trek', 'sunrise', 'squad', 'nandi'],
+    tags: ['heritage', 'lepakshi', 'squadtrip', 'rayalaseema'],
+    userName: 'Campus Explorer'
   },
   {
     id: 'm2',
-    title: 'Thindi Beedi Night Out 🍕',
-    place: 'VV Puram Food Street',
-    date: '2026-09-08',
-    note: 'Butter masala dosa challenge — ate 4 of them. Congress kadlekai was insane. Spent only ₹180 and ate like kings.',
-    imageUrl: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?auto=format&fit=crop&w=800&q=80',
+    title: 'Sunrise Ridge Trek at Penukonda Fort 🏔️',
+    place: 'Penukonda Fort, Anantapur District',
+    date: '2026-09-19',
+    note: 'Began the ascent at 5:00 AM with hostel friends. The rolling misty horizon of Rayalaseema from the watchtower was sensational. Hot ginger tea and mirchi bajjis at the foothill cost only ₹35!',
+    imageUrl: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=800&q=80',
     liked: true,
-    tags: ['foodie', 'street food', 'budget win', 'VVPuram'],
+    tags: ['trek', 'sunrise', 'penukonda', 'budgetwin'],
+    userName: 'Hostel Squad'
   },
   {
     id: 'm3',
-    title: 'Library Day at Blossom 📚',
-    place: 'Blossom Book House, Church Street',
-    date: '2026-09-01',
-    note: 'Found a 1997 first edition of "The God of Small Things" for ₹120. Also got 3 engineering textbooks at 60% off.',
-    imageUrl: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=800&q=80',
-    liked: false,
-    tags: ['books', 'study', 'church street'],
+    title: 'Vistadome Glass Train to Araku Valley 🚂',
+    place: 'Araku Valley, Visakhapatnam',
+    date: '2026-09-12',
+    note: 'Rode through 58 mountain tunnels and cascading waterfalls in the Eastern Ghats. The fresh local bamboo chicken and organic coffee aroma in the hills was unforgettable.',
+    imageUrl: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=800&q=80',
+    liked: true,
+    tags: ['train', 'araku', 'nature', 'coffee'],
+    userName: 'Student Backpacker'
   },
+  {
+    id: 'm4',
+    title: 'Sunset Acoustic Jam at Vagator Beach 🌊',
+    place: 'Vagator, North Goa',
+    date: '2026-08-28',
+    note: 'Semester-end group trip! Watched the Arabian Sea turn molten gold from the cliffside while someone played acoustic guitar. Total split cost came under ₹600 per head.',
+    imageUrl: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=800&q=80',
+    liked: false,
+    tags: ['goa', 'beach', 'sunset', 'batchtrip'],
+    userName: 'Batch of 2026'
+  },
+  {
+    id: 'm5',
+    title: 'Toy Train Ride & Tea Estate Walk 🍃',
+    place: 'Ooty, Nilgiris',
+    date: '2026-08-15',
+    note: 'Took the heritage steam locomotive through pine valleys and cold mountain mist. Loaded our backpacks with homemade fudge and eucalyptus tea.',
+    imageUrl: 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=800&q=80',
+    liked: false,
+    tags: ['ooty', 'mountains', 'tea', 'weekend'],
+    userName: 'Nature Club'
+  }
 ];
 
-export const MemoriesPage: React.FC = () => {
-  const [memories, setMemories] = useState<Memory[]>(SAMPLE_MEMORIES);
+export const MemoriesPage: React.FC<MemoriesPageProps> = ({ user }) => {
+  const [memories, setMemories] = useState<Memory[]>(() => {
+    try {
+      const stored = localStorage.getItem('twy_memories');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return PAN_INDIA_MEMORIES;
+  });
+
   const [isAdding, setIsAdding] = useState(false);
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
   const [filter, setFilter] = useState<'all' | 'liked'>('all');
@@ -61,6 +104,26 @@ export const MemoriesPage: React.FC = () => {
   const [imagePreview, setImagePreview] = useState<string>('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync memories with localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('twy_memories', JSON.stringify(memories));
+    } catch {}
+  }, [memories]);
+
+  // Optionally fetch backend memories on initial mount
+  useEffect(() => {
+    fetchMemoriesBackend().then((serverMemories) => {
+      if (serverMemories && Array.isArray(serverMemories) && serverMemories.length > 0) {
+        setMemories((local) => {
+          const ids = new Set(local.map((m) => m.id));
+          const uniqueNew = serverMemories.filter((sm: any) => !ids.has(sm.id));
+          return [...uniqueNew, ...local];
+        });
+      }
+    });
+  }, []);
 
   const toggleLike = (id: string) => {
     setMemories((prev) =>
@@ -85,24 +148,45 @@ export const MemoriesPage: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
-  const handleAddMemory = () => {
+  const handleAddMemory = async () => {
     if (!newMemory.title.trim() || !newMemory.place.trim()) return;
+
     const memory: Memory = {
       id: `m${Date.now()}`,
-      title: newMemory.title,
-      place: newMemory.place,
+      title: newMemory.title.trim(),
+      place: newMemory.place.trim(),
       date: newMemory.date,
-      note: newMemory.note,
+      note: newMemory.note.trim() || 'Logged an unforgettable memory with friends!',
       imageUrl:
         newMemory.imageUrl ||
+        imagePreview ||
         `https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=800&q=80`,
       liked: false,
       tags: newMemory.tags.split(',').map((t) => t.trim()).filter(Boolean),
+      userName: user?.fullName || 'Student Traveler',
+      userId: user?.id
     };
+
     setMemories((prev) => [memory, ...prev]);
     setIsAdding(false);
     setImagePreview('');
     setNewMemory({ title: '', place: '', date: new Date().toISOString().slice(0, 10), note: '', imageUrl: '', tags: '' });
+
+    // Synchronize to backend/Supabase
+    try {
+      await createMemoryBackend({
+        userId: user?.id,
+        userName: memory.userName,
+        title: memory.title,
+        place: memory.place,
+        date: memory.date,
+        note: memory.note,
+        imageUrl: memory.imageUrl,
+        tags: memory.tags
+      });
+    } catch (e) {
+      console.warn('Memory backend sync notice:', e);
+    }
   };
 
   const visibleMemories = filter === 'liked' ? memories.filter((m) => m.liked) : memories;

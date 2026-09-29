@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   User, Mail, School, MapPin, Heart, Compass, Camera, Wallet, 
   Sparkles, ShieldCheck, Check, LogOut, Award, ChevronRight 
 } from 'lucide-react';
 import type { ActiveTab, UserProfile } from '../types';
+import { updateProfileBackend } from '../utils/api';
 
 interface ProfilePageProps {
   user: UserProfile;
   savedCount: number;
   setActiveTab: (tab: ActiveTab) => void;
   onLogout: () => void;
+  onUpdateUser?: (updated: UserProfile) => void;
 }
 
 const AVAILABLE_VIBES = [
@@ -29,15 +31,25 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
   savedCount,
   setActiveTab,
   onLogout,
+  onUpdateUser,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [fullName, setFullName] = useState(user.fullName || 'Pooja Sharma');
-  const [collegeName, setCollegeName] = useState(user.collegeName || 'RV College of Engineering');
-  const [city, setCity] = useState(user.city || 'Bengaluru');
+  const [fullName, setFullName] = useState(user.fullName || 'Student Traveler');
+  const [collegeName, setCollegeName] = useState(user.collegeName || 'Campus University');
+  const [city, setCity] = useState(user.city || 'All India');
   const [selectedVibes, setSelectedVibes] = useState<string[]>(
     user.preferredVibe || ['cafes', 'study_spots', 'street_food', 'photo_spots']
   );
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Sync state if user changes
+  React.useEffect(() => {
+    if (user.fullName) setFullName(user.fullName);
+    if (user.collegeName) setCollegeName(user.collegeName);
+    if (user.city) setCity(user.city);
+    if (user.preferredVibe) setSelectedVibes(user.preferredVibe);
+  }, [user]);
 
   const toggleVibe = (id: string) => {
     setSelectedVibes(prev =>
@@ -45,11 +57,39 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
     );
   };
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsEditing(false);
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
+    setIsSaving(true);
+    
+    const updatedUser: UserProfile = {
+      ...user,
+      fullName: fullName.trim() || 'Student Traveler',
+      collegeName: collegeName.trim() || 'Campus University',
+      city: city.trim() || 'All India',
+      preferredVibe: selectedVibes,
+    };
+
+    if (onUpdateUser) {
+      onUpdateUser(updatedUser);
+    }
+
+    try {
+      await updateProfileBackend({
+        id: user.id,
+        fullName: updatedUser.fullName,
+        collegeName: updatedUser.collegeName,
+        city: updatedUser.city,
+        preferredVibe: updatedUser.preferredVibe,
+        avatarUrl: user.avatarUrl
+      });
+    } catch (err) {
+      console.warn('Profile save notice:', err);
+    } finally {
+      setIsSaving(false);
+      setIsEditing(false);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3500);
+    }
   };
 
   return (

@@ -4,29 +4,76 @@ import { getSupabaseClient } from '../services/supabaseService.js';
 // In-memory OTP store for phone authentication (phone -> { otp, expiresAt })
 const OTP_STORE = new Map();
 
-export const login = (req, res) => {
+export const login = async (req, res) => {
   const { email, phone, password } = req.body;
   const db = readDB();
+  const supabase = getSupabaseClient();
 
   let user = null;
-  if (email) {
-    user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
-  } else if (phone) {
-    user = db.users.find(u => u.phone === phone);
+  const userEmail = email ? email.trim().toLowerCase() : null;
+
+  // 1. Try finding user in Supabase
+  if (supabase && userEmail) {
+    try {
+      const { data: listData } = await supabase.auth.admin.listUsers();
+      const supaAuthUser = listData?.users?.find(u => u.email.toLowerCase() === userEmail);
+      if (supaAuthUser) {
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('id', supaAuthUser.id)
+          .single();
+
+        user = {
+          id: supaAuthUser.id,
+          email: supaAuthUser.email,
+          phone: supaAuthUser.phone || phone || null,
+          fullName: profile?.full_name || supaAuthUser.user_metadata?.full_name || userEmail.split('@')[0],
+          collegeName: profile?.college_name || supaAuthUser.user_metadata?.college_name || 'Student Explorer',
+          city: profile?.city || supaAuthUser.user_metadata?.city || 'All India',
+          avatarUrl: profile?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+          preferredVibe: profile?.preferred_vibe || ['CHILL', 'BUDGET']
+        };
+      }
+    } catch (e) {
+      console.warn('Supabase login check warning:', e.message);
+    }
   }
 
-  // Fallback to default student user if not found
+  // 2. Fallback to local DB
+  if (!user) {
+    if (userEmail) {
+      user = db.users.find(u => u.email.toLowerCase() === userEmail);
+    } else if (phone) {
+      user = db.users.find(u => u.phone === phone);
+    }
+  }
+
+  // 3. Auto-generate profile if first time
+  if (!user && (userEmail || phone)) {
+    user = {
+      id: `usr-${Date.now()}`,
+      email: userEmail || `student.${phone ? phone.slice(-4) : Date.now()}@travelwithyou.com`,
+      phone: phone || null,
+      fullName: userEmail ? userEmail.split('@')[0].replace('.', ' ').replace(/^\w/, c => c.toUpperCase()) : `Student (${phone.slice(-4)})`,
+      collegeName: 'Student Explorer',
+      city: 'All India',
+      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+      preferredVibe: ['CHILL', 'BUDGET']
+    };
+  }
+
   if (!user) {
     user = db.users[0];
   }
 
   res.json({
     success: true,
-    token: user.token,
+    token: `token-${user.id || Date.now()}`,
     user: {
       id: user.id,
       email: user.email,
-      phone: user.phone || phone || '+91 98765 43210',
+      phone: user.phone || phone || null,
       fullName: user.fullName,
       collegeName: user.collegeName,
       city: user.city,
@@ -126,29 +173,98 @@ export const googleLogin = (req, res) => {
   });
 };
 
-export const signup = (req, res) => {
-  const { email, phone, fullName, collegeName, city, preferredVibe } = req.body;
+export const signup = async (req, res) => {
+  const { email, password, phone, fullName, collegeName, city, preferredVibe } = req.body;
   const db = readDB();
+  const supabase = getSupabaseClient();
 
-  const newUser = {
-    id: `usr-${Date.now()}`,
-    email: email || 'student@travelwithyou.com',
-    phone: phone || null,
-    fullName: fullName || 'New Student Traveler',
-    collegeName: collegeName || 'Campus University',
-    city: city || 'Bengaluru',
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
-    preferredVibe: preferredVibe || ['cafes', 'street_food', 'parks_nature'],
-    token: `token-${Date.now()}`
-  };
+  const userEmail = email ? email.trim().toLowerCase() : `student.${Date.now()}@travelwithyou.com`;
+  const userFullName = fullName ? fullName.trim() : 'Student Traveler';
+  const userCollege = collegeName ? collegeName.trim() : 'College / University';
+  const userCity = city ? city.trim() : 'All India';
+  const userVibes = Array.isArray(preferredVibe) ? preferredVibe : ['CHILL', 'BUDGET', 'CAFES'];
 
-  db.users.push(newUser);
-  writeDB(db);
+  let supabaseUserId = null;
+
+  // 1. Create account in Supabase Cloud Database (auth.users + public.user_profiles)
+  if (supabase) {
+    try {
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: userEmail,
+        password: password || 'TravelWithYou2026!',
+        email_confirm: true,
+        user_metadata: {
+          full_name: userFullName,
+          college_name: userCollege,
+          city: userCity
+        }
+      });
+
+      if (authData?.user) {
+        supabaseUserId = authData.user.id;
+      } else if (authError) {
+        console.log('Supabase user notice:', authError.message);
+        // If already registered, fetch user ID
+        const { data: listData } = await supabase.auth.admin.listUsers();
+        const existing = listData?.users?.find(u => u.email.toLowerCase() === userEmail);
+        if (existing) supabaseUserId = existing.id;
+      }
+
+      // Upsert profile in user_profiles table
+      if (supabaseUserId) {
+        const { error: profileError } = await supabase
+          .from('user_profiles')
+          .upsert({
+            id: supabaseUserId,
+            full_name: userFullName,
+            college_name: userCollege,
+            city: userCity,
+            preferred_vibe: userVibes
+          });
+
+        if (profileError) {
+          console.warn('Supabase user_profiles upsert notice:', profileError.message);
+        } else {
+          console.log(`⚡ Successfully saved account to Supabase Cloud Database: ${userEmail} (${supabaseUserId})`);
+        }
+      }
+    } catch (err) {
+      console.warn('Supabase signup error:', err.message);
+    }
+  }
+
+  // 2. Also record in local DB for offline resilience / instant fallback
+  let localUser = db.users.find(u => u.email.toLowerCase() === userEmail);
+  if (!localUser) {
+    localUser = {
+      id: supabaseUserId || `usr-${Date.now()}`,
+      email: userEmail,
+      phone: phone || null,
+      fullName: userFullName,
+      collegeName: userCollege,
+      city: userCity,
+      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+      preferredVibe: userVibes,
+      token: `token-${Date.now()}`
+    };
+    db.users.push(localUser);
+    writeDB(db);
+  }
 
   res.status(201).json({
     success: true,
-    token: newUser.token,
-    user: newUser
+    token: localUser.token || `token-${Date.now()}`,
+    user: {
+      id: supabaseUserId || localUser.id,
+      email: userEmail,
+      phone: localUser.phone,
+      fullName: userFullName,
+      collegeName: userCollege,
+      city: userCity,
+      avatarUrl: localUser.avatarUrl,
+      preferredVibe: userVibes
+    },
+    savedToSupabase: Boolean(supabaseUserId)
   });
 };
 
@@ -157,14 +273,50 @@ export const getMe = (req, res) => {
   res.json(db.users[0]);
 };
 
-export const updateProfile = (req, res) => {
+export const updateProfile = async (req, res) => {
+  const { id, fullName, collegeName, city, preferredVibe, avatarUrl } = req.body;
   const db = readDB();
-  const user = db.users[0];
-  if (req.body.fullName) user.fullName = req.body.fullName;
-  if (req.body.collegeName) user.collegeName = req.body.collegeName;
-  if (req.body.city) user.city = req.body.city;
-  if (req.body.preferredVibe) user.preferredVibe = req.body.preferredVibe;
+  const supabase = getSupabaseClient();
 
-  writeDB(db);
-  res.json({ success: true, user });
+  // 1. If valid Supabase user, update user_profiles in Supabase
+  if (supabase && id && typeof id === 'string' && id.includes('-')) {
+    try {
+      await supabase
+        .from('user_profiles')
+        .upsert({
+          id,
+          full_name: fullName,
+          college_name: collegeName,
+          city,
+          preferred_vibe: preferredVibe,
+          avatar_url: avatarUrl
+        });
+      console.log('⚡ Updated profile in Supabase user_profiles for:', id);
+    } catch (err) {
+      console.warn('Supabase updateProfile error:', err.message);
+    }
+  }
+
+  // 2. Also update local DB
+  const user = db.users.find(u => u.id === id) || db.users[0];
+  if (user) {
+    if (fullName) user.fullName = fullName;
+    if (collegeName) user.collegeName = collegeName;
+    if (city) user.city = city;
+    if (preferredVibe) user.preferredVibe = preferredVibe;
+    if (avatarUrl) user.avatarUrl = avatarUrl;
+    writeDB(db);
+  }
+
+  res.json({
+    success: true,
+    user: {
+      ...user,
+      fullName: fullName || user?.fullName,
+      collegeName: collegeName || user?.collegeName,
+      city: city || user?.city,
+      preferredVibe: preferredVibe || user?.preferredVibe,
+      avatarUrl: avatarUrl || user?.avatarUrl
+    }
+  });
 };

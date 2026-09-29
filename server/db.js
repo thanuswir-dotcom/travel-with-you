@@ -15,9 +15,9 @@ const INITIAL_DB = {
     {
       id: 'usr-1',
       email: 'student@travelwithyou.com',
-      fullName: 'Pooja Sharma',
-      collegeName: 'RV College of Engineering',
-      city: 'Bengaluru',
+      fullName: 'Student Explorer',
+      collegeName: 'Campus University',
+      city: 'All India',
       avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
       preferredVibe: ['cafes', 'study_spots', 'street_food', 'photo_spots'],
       token: 'demo-token-123'
@@ -106,38 +106,50 @@ const INITIAL_DB = {
     {
       id: 'mem-1',
       userId: 'usr-1',
-      userName: 'Pooja Sharma',
-      title: 'Sunrise at Nandi Hills 🌅',
-      place: 'Nandi Hills, Chikkaballapur',
-      date: '2026-09-15',
-      note: 'Left at 4 AM with 4 hostel friends. The rolling cloud bed was completely magical! Total cost per head: ₹120 including entry and hot chai.',
-      imageUrl: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=800&q=80',
+      userName: 'Campus Explorer',
+      title: 'Lepakshi Monolith & Hanging Pillar 🛕',
+      place: 'Lepakshi, Sri Sathya Sai District, AP',
+      date: '2026-09-24',
+      note: 'College weekend expedition from campus! Stood beneath the colossal monolithic Nandi and tested passing cloth under the hanging pillar. Outstanding Vijayanagara stone carvings and zero ticket cost for students.',
+      imageUrl: 'https://images.unsplash.com/photo-1590050752117-238cb0fb12b1?auto=format&fit=crop&w=800&q=80',
       liked: true,
-      tags: ['trek', 'sunrise', 'hostellife', 'nandi']
+      tags: ['heritage', 'lepakshi', 'squadtrip', 'rayalaseema']
     },
     {
       id: 'mem-2',
       userId: 'usr-1',
-      userName: 'Pooja Sharma',
-      title: 'Street Food Challenge at VV Puram 🍕',
-      place: 'VV Puram Food Street',
-      date: '2026-09-18',
-      note: 'Ate 4 different dosas and rabdi jalebi with the gang. ₹130 per person and full stomach guaranteed.',
-      imageUrl: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?auto=format&fit=crop&w=800&q=80',
+      userName: 'Hostel Squad',
+      title: 'Sunrise Ridge Trek at Penukonda Fort 🏔️',
+      place: 'Penukonda Fort, Anantapur District',
+      date: '2026-09-19',
+      note: 'Began the ascent at 5:00 AM with hostel friends. The rolling misty horizon of Rayalaseema from the watchtower was sensational. Hot ginger tea and mirchi bajjis at the foothill cost only ₹35!',
+      imageUrl: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=800&q=80',
       liked: true,
-      tags: ['foodie', 'streetfood', 'budgetwin']
+      tags: ['trek', 'sunrise', 'penukonda', 'budgetwin']
     },
     {
       id: 'mem-3',
       userId: 'usr-1',
-      userName: 'Pooja Sharma',
-      title: 'Late Night Coffee & Assignment Grind ☕',
-      place: 'DYU Art Cafe, Koramangala',
-      date: '2026-09-22',
-      note: 'Finished our hackathon slide deck under fairy lights and lush trees. Best vibes for focused students.',
-      imageUrl: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=800&q=80',
-      liked: false,
-      tags: ['hackathon', 'cafe', 'latenight']
+      userName: 'Student Backpacker',
+      title: 'Vistadome Glass Train to Araku Valley 🚂',
+      place: 'Araku Valley, Visakhapatnam',
+      date: '2026-09-12',
+      note: 'Rode through 58 mountain tunnels and cascading waterfalls in the Eastern Ghats. The fresh local bamboo chicken and organic coffee aroma in the hills was unforgettable.',
+      imageUrl: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=800&q=80',
+      liked: true,
+      tags: ['train', 'araku', 'nature', 'coffee']
+    },
+    {
+      id: 'mem-4',
+      userId: 'usr-1',
+      userName: 'Goa Crew',
+      title: 'Sunset Acoustic Jam at Vagator Beach 🌊',
+      place: 'Vagator, North Goa',
+      date: '2026-09-05',
+      note: 'Post-semester break getaway! Rented budget scooters for ₹350/day and gathered on the red cliffs overlooking the Arabian Sea as someone played guitar.',
+      imageUrl: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=800&q=80',
+      liked: true,
+      tags: ['beach', 'goa', 'semesterbreak', 'sunset']
     }
   ]
 };

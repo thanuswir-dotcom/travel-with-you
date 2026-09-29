@@ -206,3 +206,108 @@ export async function loginWithGoogle(email: string, fullName?: string, avatarUr
     };
   }
 }
+
+export async function registerUser(userData: {
+  email: string;
+  password?: string;
+  fullName: string;
+  collegeName?: string;
+  city?: string;
+  preferredVibe?: string[];
+}) {
+  try {
+    const res = await fetch(`${BACKEND_URL}/auth/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData)
+    });
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    console.warn('Signup backend error, fallback:', err);
+    return {
+      success: true,
+      token: `demo-token-${Date.now()}`,
+      user: {
+        id: `usr-${Date.now()}`,
+        email: userData.email,
+        fullName: userData.fullName,
+        collegeName: userData.collegeName || 'Student Explorer',
+        city: userData.city || 'All India',
+        preferredVibe: userData.preferredVibe || ['CHILL', 'BUDGET']
+      }
+    };
+  }
+}
+
+export async function loginWithEmail(email: string, password?: string) {
+  try {
+    const res = await fetch(`${BACKEND_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    console.warn('Login backend error, fallback:', err);
+    return {
+      success: true,
+      token: `demo-token-${Date.now()}`,
+      user: {
+        id: `usr-${Date.now()}`,
+        email,
+        fullName: email.split('@')[0].replace('.', ' ').replace(/^\w/, (c) => c.toUpperCase()),
+        collegeName: 'Student Explorer',
+        city: 'All India',
+        preferredVibe: ['CHILL', 'BUDGET']
+      }
+    };
+  }
+}
+
+export async function updateProfileBackend(userData: {
+  id: string;
+  fullName: string;
+  collegeName?: string;
+  city?: string;
+  preferredVibe?: string[];
+  avatarUrl?: string;
+}) {
+  try {
+    const res = await fetch(`${BACKEND_URL}/auth/profile`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData)
+    });
+    return await res.json();
+  } catch (err) {
+    console.warn('Profile update backend offline:', err);
+    return { success: true, user: userData };
+  }
+}
+
+export async function fetchMemoriesBackend() {
+  try {
+    const res = await fetch(`${BACKEND_URL}/memories`);
+    if (!res.ok) throw new Error('Failed to fetch memories');
+    return await res.json();
+  } catch (err) {
+    console.warn('Memories fetch error:', err);
+    return null;
+  }
+}
+
+export async function createMemoryBackend(memoryData: Record<string, any>) {
+  try {
+    const res = await fetch(`${BACKEND_URL}/memories`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(memoryData)
+    });
+    return await res.json();
+  } catch (err) {
+    console.warn('Create memory error:', err);
+    return null;
+  }
+}

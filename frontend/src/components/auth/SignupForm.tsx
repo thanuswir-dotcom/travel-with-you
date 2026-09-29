@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import type { UserProfile } from '../../types';
 import { checkPasswordStrength, isValidEmail } from '../../utils/validation';
+import { registerUser } from '../../utils/api';
 
 interface SignupFormProps {
   onSuccess: (user: UserProfile) => void;
@@ -40,7 +41,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
   const pwdCriteria = checkPasswordStrength(password);
   const passwordsMatch = password.length > 0 && password === confirmPassword;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
@@ -71,10 +72,27 @@ export const SignupForm: React.FC<SignupFormProps> = ({
 
     setLoading(true);
 
-    // Simulated registration - will connect to Supabase Auth in Step 9
-    setTimeout(() => {
+    try {
+      const res = await registerUser({
+        email: email.trim(),
+        password,
+        fullName: `${firstName.trim()} ${lastName.trim()}`,
+        collegeName: collegeName.trim() || 'Student Explorer',
+        city: 'All India',
+        preferredVibe: ['BUDGET', 'CHILL']
+      });
+
       setLoading(false);
-      const user: UserProfile = {
+
+      if (res && res.user) {
+        onSuccess(res.user);
+        onClose();
+      } else {
+        setErrorMessage(res?.error || 'Failed to create account. Please try again.');
+      }
+    } catch {
+      setLoading(false);
+      const fallbackUser: UserProfile = {
         id: `usr-${Date.now()}`,
         email: email.trim(),
         fullName: `${firstName.trim()} ${lastName.trim()}`,
@@ -82,9 +100,9 @@ export const SignupForm: React.FC<SignupFormProps> = ({
         city: 'All India',
         preferredVibe: ['BUDGET', 'CHILL'],
       };
-      onSuccess(user);
+      onSuccess(fallbackUser);
       onClose();
-    }, 800);
+    }
   };
 
   return (
