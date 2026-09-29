@@ -8,7 +8,7 @@
     "dev": "node scripts/dev.js",
     "dev:client": "npm run dev --prefix frontend",
     "dev:server": "npm run dev --prefix server",
-    "build": "npm run build --prefix frontend",
+    "build": "cd frontend && npm install && npm run build",
     "test": "node scripts/test-api.js",
     "seed": "node scripts/seed.js",
     "start": "node server/index.js",
