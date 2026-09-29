@@ -1,8 +1,11 @@
+import { isSupabaseConfigured } from '../services/supabaseService.js';
+
 export const getHealth = (req, res) => {
   res.json({
     status: 'ok',
     app: 'Travel With You Backend API',
     tagline: 'Discover more. Spend less. Make memories.',
+    supabaseConnected: isSupabaseConfigured(),
     version: '1.0.0',
     timestamp: new Date().toISOString()
   });
