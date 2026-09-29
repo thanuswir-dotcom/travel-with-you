@@ -31,6 +31,7 @@ export interface Place {
   address: string;
   area: string;
   city: string;
+  state?: string;
   latitude: number;
   longitude: number;
   priceLevel: number; // 0=Free, 1=<₹150, 2=₹150-₹350, 3=₹350-₹700, 4=₹700+

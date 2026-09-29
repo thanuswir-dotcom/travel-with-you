@@ -9,6 +9,7 @@ import { SurpriseMeModal } from './components/SurpriseMeModal';
 import { CitySelectorModal } from './components/CitySelectorModal';
 import { LoginForm } from './components/auth/LoginForm';
 import { SignupForm } from './components/auth/SignupForm';
+import { AuthPage } from './components/auth/AuthPage';
 import { PWAInstallBanner } from './components/PWAInstallBanner';
 
 import { LandingPage } from './pages/LandingPage';
@@ -150,6 +151,7 @@ export default function App() {
     try {
       localStorage.setItem('twy_user', JSON.stringify(u));
     } catch {}
+    setActiveTab('home');
     setAuthMode(null);
   };
 
@@ -158,7 +160,16 @@ export default function App() {
     try {
       localStorage.removeItem('twy_user');
     } catch {}
+    setActiveTab('home');
   };
+
+  // 1. Mandatory Login/Sign-in First Screen:
+  // When a user opens the website, the Login/Sign-in page appears immediately.
+  // Users cannot access the dashboard or travel tools before signing in.
+  // If already authenticated, the app directly renders the Home/Dashboard below.
+  if (!user) {
+    return <AuthPage onSuccess={handleAuthSuccess} />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white">

@@ -57,13 +57,15 @@ export const getPlaces = (req, res) => {
     places = places.filter(p => p.isQuiet);
   }
 
-  // Search query
+  // Search query (matches place name, city, state, description, area, category, perks)
   if (search) {
     const q = search.toLowerCase().trim();
     places = places.filter(p =>
       p.name.toLowerCase().includes(q) ||
       p.description.toLowerCase().includes(q) ||
-      p.area.toLowerCase().includes(q) ||
+      (p.area && p.area.toLowerCase().includes(q)) ||
+      (p.city && p.city.toLowerCase().includes(q)) ||
+      (p.state && p.state.toLowerCase().includes(q)) ||
       p.category.toLowerCase().includes(q) ||
       (p.studentPerks && p.studentPerks.some(perk => perk.toLowerCase().includes(q)))
     );

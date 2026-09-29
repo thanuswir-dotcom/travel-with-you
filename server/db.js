@@ -158,7 +158,21 @@ export function readDB() {
   try {
     initDB();
     const raw = fs.readFileSync(DB_FILE, 'utf8');
-    return JSON.parse(raw);
+    const data = JSON.parse(raw);
+    // Ensure all SEED_PLACES (including pan-India destinations) are present without duplicates
+    if (Array.isArray(data.places)) {
+      let updated = false;
+      for (const sp of SEED_PLACES) {
+        if (!data.places.some(p => p.id === sp.id || (p.name === sp.name && p.city === sp.city))) {
+          data.places.push(sp);
+          updated = true;
+        }
+      }
+      if (updated) {
+        writeDB(data);
+      }
+    }
+    return data;
   } catch (err) {
     console.error('Error reading DB, returning initial DB:', err);
     return INITIAL_DB;

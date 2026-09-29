@@ -1,4 +1,7 @@
 import type { CategoryInfo, Place } from '../types';
+import { PAN_INDIA_PLACES, ALL_INDIAN_STATES_UTS } from './indiaDestinations';
+
+export { ALL_INDIAN_STATES_UTS, PAN_INDIA_PLACES };
 
 export const CATEGORIES: CategoryInfo[] = [
   {
@@ -99,7 +102,7 @@ export const CATEGORIES: CategoryInfo[] = [
   },
 ];
 
-export const INITIAL_FEATURED_PLACES: Place[] = [
+const BASE_PLACES: Place[] = [
   // ── STUDY SPOTS ──────────────────────────────────────────────────────
   {
     id: 'p-1',
@@ -764,15 +767,24 @@ export const INITIAL_FEATURED_PLACES: Place[] = [
   },
 ];
 
+// Deduplicate and combine base places with Pan-India places
+const basePlaceIds = new Set(BASE_PLACES.map((p) => p.id));
+export const INITIAL_FEATURED_PLACES: Place[] = [
+  ...BASE_PLACES,
+  ...PAN_INDIA_PLACES.filter((p) => !basePlaceIds.has(p.id)),
+];
+
 export const POPULAR_SEARCH_QUERIES = [
+  'Munnar tea hills Kerala',
+  'Araku valley coffee gardens',
+  'Hampi ruins Karnataka',
+  'Goa beach shacks under ₹200',
+  'Jaipur Hawa Mahal rooftop cafes',
+  'Rishikesh river rafting',
+  'Manali snow spots & cafes',
+  'Varanasi evening Ganga aarti',
+  'Gorantla & Anantapur hotspots',
   'Cheap food near me',
   'Places under ₹500',
-  'Study spots with Wi-Fi',
-  'Best theatre near me',
-  'Peaceful places to visit',
-  'Places for 4 friends',
-  'Free places to visit',
-  'Weekend trip under ₹800',
-  'Cafés with charging points',
-  'Gaming zones Bengaluru',
+  'Pangong Lake Ladakh',
 ];

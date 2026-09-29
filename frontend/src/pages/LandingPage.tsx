@@ -67,11 +67,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   // Filter places based on search query and category
   const filteredPlaces = INITIAL_FEATURED_PLACES.filter((place) => {
     const matchesCategory = selectedCategory === 'all' || place.category === selectedCategory;
-    const matchesSearch = searchQuery.trim() === '' || 
-      place.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      place.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      place.area.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      place.studentPerks.some((p) => p.toLowerCase().includes(searchQuery.toLowerCase()));
+    const q = searchQuery.trim().toLowerCase();
+    const matchesSearch = q === '' || 
+      place.name.toLowerCase().includes(q) ||
+      place.description.toLowerCase().includes(q) ||
+      place.area.toLowerCase().includes(q) ||
+      (place.city && place.city.toLowerCase().includes(q)) ||
+      (place.state && place.state.toLowerCase().includes(q)) ||
+      place.studentPerks.some((p) => p.toLowerCase().includes(q));
 
     return matchesCategory && matchesSearch;
   });
@@ -114,6 +117,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         }}
         onStudentModeClick={() => setActiveTab('planner')}
         onSurpriseMeClick={onTriggerSurprise}
+        onSelectPlace={onViewPlaceDetails}
         currentCity={location.city}
       />
 

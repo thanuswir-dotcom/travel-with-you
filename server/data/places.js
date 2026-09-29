@@ -1,5 +1,7 @@
 // Travel With You - Seed Places Data across 12+ categories and student hubs
-export const SEED_PLACES = [
+import { PAN_INDIA_PLACES } from './panIndiaPlaces.js';
+
+export const BASE_PLACES = [
   // ─── BENGALURU ─────────────────────────────────────────────────────────────
   // 1. Cafes
   {
@@ -732,4 +734,9 @@ export const SEED_PLACES = [
     distanceKm: 3.5,
     safetyNotes: 'Constantly populated and well-lit by IT tech parks.'
   }
+];
+
+export const SEED_PLACES = [
+  ...BASE_PLACES,
+  ...PAN_INDIA_PLACES.filter(p => !BASE_PLACES.some(b => b.id === p.id))
 ];

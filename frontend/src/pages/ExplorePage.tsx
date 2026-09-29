@@ -8,6 +8,7 @@ import {
   DollarSign, Compass, Clock, Users, Camera, BookOpen, Utensils, Music
 } from 'lucide-react';
 import { MapPage } from './MapPage';
+import { DestinationSearchBar } from '../components/common/DestinationSearchBar';
 
 interface ExplorePageProps {
   savedPlaceIds: string[];
@@ -93,13 +94,15 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
       }
 
       if (query.trim()) {
-        const q = query.toLowerCase();
+        const q = query.toLowerCase().trim();
         return (
           p.name.toLowerCase().includes(q) ||
           p.description.toLowerCase().includes(q) ||
-          p.area.toLowerCase().includes(q) ||
+          (p.area && p.area.toLowerCase().includes(q)) ||
+          (p.city && p.city.toLowerCase().includes(q)) ||
+          (p.state && p.state.toLowerCase().includes(q)) ||
           p.category.toLowerCase().includes(q) ||
-          p.studentPerks.some((pk) => pk.toLowerCase().includes(q))
+          (p.studentPerks && p.studentPerks.some((pk) => pk.toLowerCase().includes(q)))
         );
       }
       return true;
@@ -183,21 +186,21 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
           {/* Search Bar & Filter Controls */}
           <div className="space-y-4 mb-8">
             <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search cafes, theatres, cheap food, wifi spots..."
-                  className="w-full pl-11 pr-4 py-3 rounded-2xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 text-sm outline-none focus:border-emerald-500/50"
-                />
-                {query && (
-                  <button onClick={() => setQuery('')} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
+            <div className="flex-1">
+              <DestinationSearchBar
+                value={query}
+                onChange={(val) => setQuery(val)}
+                onSearch={(q) => setQuery(q)}
+                onSelectPlace={(p) => {
+                  setQuery(p.name);
+                  onViewPlaceDetails(p);
+                }}
+                onSelectCity={(city) => {
+                  setQuery(city);
+                }}
+                placeholder="Search tourist spot, city, or state across all India (e.g. Kerala, Jaipur, Borra Caves, Munnar)..."
+              />
+            </div>
 
               <div className="flex items-center gap-2">
                 <button
@@ -423,18 +426,45 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
               ))}
             </div>
           ) : (
-            <div className="text-center py-20 rounded-3xl border border-slate-800 bg-slate-900/30 p-8 space-y-4">
-              <div className="text-4xl">🔍</div>
-              <h3 className="text-lg font-bold text-white">No spots found matching your filter</h3>
-              <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                Try widening your budget, selecting another category, or resetting all filters.
+            <div className="text-center py-16 sm:py-20 rounded-3xl border border-slate-800 bg-slate-900/40 p-8 space-y-4">
+              <div className="w-16 h-16 rounded-3xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center mx-auto text-3xl">
+                🧭
+              </div>
+              <h3 className="text-xl font-bold text-white">
+                {query ? `No destinations found for "${query}"` : 'No spots found matching your filter'}
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
+                {query 
+                  ? 'We couldn\'t find any tourist places matching your search. Try searching for an Indian state, major city, or pick from popular destinations below.' 
+                  : 'Try widening your budget, selecting another category, or resetting all filters.'}
               </p>
-              <button
-                onClick={resetFilters}
-                className="px-6 py-2.5 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs cursor-pointer shadow-lg shadow-emerald-500/20"
-              >
-                Reset Filters
-              </button>
+
+              {/* Quick suggestions if query not found */}
+              <div className="pt-2">
+                <span className="text-[11px] uppercase tracking-wider font-bold text-slate-500 block mb-2">
+                  Popular Indian Destinations:
+                </span>
+                <div className="flex flex-wrap items-center justify-center gap-1.5 max-w-lg mx-auto">
+                  {['Goa', 'Jaipur', 'Munnar', 'Ooty', 'Leh', 'Varanasi', 'Araku Valley', 'Hampi', 'Rishikesh', 'Kolkata'].map((pick) => (
+                    <button
+                      key={pick}
+                      onClick={() => setQuery(pick)}
+                      className="px-3 py-1 rounded-xl bg-slate-800 hover:bg-emerald-500/20 hover:text-emerald-300 hover:border-emerald-500/40 border border-slate-700 text-slate-300 text-xs font-medium transition-all cursor-pointer"
+                    >
+                      {pick}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-4">
+                <button
+                  onClick={resetFilters}
+                  className="px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs cursor-pointer shadow-lg shadow-emerald-500/20 transition-all"
+                >
+                  Reset All Filters
+                </button>
+              </div>
             </div>
           )}
         </>

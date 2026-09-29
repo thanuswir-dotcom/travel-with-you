@@ -9,6 +9,8 @@ import {
   GraduationCap 
 } from 'lucide-react';
 import { POPULAR_SEARCH_QUERIES } from '../utils/constants';
+import { DestinationSearchBar } from './common/DestinationSearchBar';
+import type { Place } from '../types';
 
 interface HeroProps {
   searchQuery: string;
@@ -17,6 +19,7 @@ interface HeroProps {
   onExploreClick: () => void;
   onStudentModeClick: () => void;
   onSurpriseMeClick: () => void;
+  onSelectPlace?: (place: Place) => void;
   currentCity: string;
 }
 
@@ -27,6 +30,7 @@ export const Hero: React.FC<HeroProps> = ({
   onExploreClick,
   onStudentModeClick,
   onSurpriseMeClick,
+  onSelectPlace,
   currentCity,
 }) => {
   const [localInput, setLocalInput] = useState(searchQuery);
@@ -77,50 +81,37 @@ export const Hero: React.FC<HeroProps> = ({
           budget theaters, street food hubs, and plan group outings under ₹500.
         </p>
 
-        {/* Search Bar Form */}
+        {/* Search Bar with Pan-India Autocomplete */}
         <div className="max-w-3xl mx-auto mb-8">
-          <form 
-            onSubmit={handleSubmit}
-            className="p-2 sm:p-2.5 rounded-2xl sm:rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl backdrop-blur-xl flex flex-col sm:flex-row items-center gap-2"
-          >
-            <div className="flex items-center gap-3 w-full px-4 py-2 sm:py-0">
-              <Search className="w-5 h-5 text-emerald-400 shrink-0" />
-              <input
-                type="text"
-                value={localInput}
-                onChange={(e) => setLocalInput(e.target.value)}
-                placeholder="Where do you want to go? e.g. Cheap food near me, Cafés under ₹200..."
-                className="w-full bg-transparent text-white placeholder-slate-500 text-sm sm:text-base outline-none"
-              />
-            </div>
-
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <button
-                type="button"
-                onClick={onSurpriseMeClick}
-                title="Roll the dice for a random student adventure!"
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl sm:rounded-2xl bg-slate-800 hover:bg-slate-750 text-slate-200 text-xs sm:text-sm font-medium border border-slate-700 transition-all cursor-pointer"
-              >
-                <Dice5 className="w-4 h-4 text-teal-400" />
-                <span className="hidden md:inline">Surprise Me</span>
-              </button>
-
-              <button
-                type="submit"
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl sm:rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-bold text-xs sm:text-sm shadow-lg shadow-emerald-500/25 transition-all cursor-pointer whitespace-nowrap"
-              >
-                <span>Search</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          </form>
+          <DestinationSearchBar
+            value={localInput}
+            onChange={(val) => {
+              setLocalInput(val);
+              setSearchQuery(val);
+            }}
+            onSearch={(q) => {
+              onSearch(q);
+            }}
+            onSelectPlace={(p) => {
+              if (onSelectPlace) onSelectPlace(p);
+              else onSearch(p.name);
+            }}
+            onSelectCity={(city) => {
+              setLocalInput(city);
+              setSearchQuery(city);
+              onSearch(city);
+            }}
+            showSurpriseButton={true}
+            onSurpriseMeClick={onSurpriseMeClick}
+            placeholder="Search tourist spot, city, or state (e.g. Kerala, Jaipur, Borra Caves, Munnar)..."
+          />
 
           {/* Quick Search Chips */}
           <div className="flex items-center justify-center flex-wrap gap-2 mt-4 text-xs text-slate-400">
             <span className="text-slate-500 flex items-center gap-1">
               <TrendingUp className="w-3 h-3 text-emerald-400" /> Popular:
             </span>
-            {POPULAR_SEARCH_QUERIES.slice(0, 4).map((query, index) => (
+            {POPULAR_SEARCH_QUERIES.slice(0, 5).map((query, index) => (
               <button
                 key={index}
                 type="button"
