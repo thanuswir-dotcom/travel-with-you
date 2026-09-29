@@ -10,7 +10,7 @@ import {
   CheckCircle2, Send, Tag, ChevronRight, ShieldCheck, Dice5
 } from 'lucide-react';
 import { fetchWeather, sendAIChat, type WeatherData } from '../utils/api';
-import { getPlacesWithLiveDistance } from '../utils/location';
+import { getPlacesWithLiveDistance, calculateDistanceKm } from '../utils/location';
 
 interface LandingPageProps {
   location: LocationState;
@@ -87,21 +87,72 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     }
   };
 
-  // Filter places based on search query and category (sorted by true proximity)
+  // Filter places: exact place matches first + near places around the searched location + all temples
   const filteredPlaces = React.useMemo(() => {
-    return placesSortedByProximity.filter((place) => {
-      const matchesCategory = selectedCategory === 'all' || place.category === selectedCategory;
-      const q = searchQuery.trim().toLowerCase();
-      const matchesSearch = q === '' || 
-        place.name.toLowerCase().includes(q) ||
-        place.description.toLowerCase().includes(q) ||
-        place.area.toLowerCase().includes(q) ||
-        (place.city && place.city.toLowerCase().includes(q)) ||
-        (place.state && place.state.toLowerCase().includes(q)) ||
-        place.studentPerks.some((p) => p.toLowerCase().includes(q));
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) {
+      return placesSortedByProximity.filter((place) => {
+        return selectedCategory === 'all' || place.category === selectedCategory;
+      });
+    }
 
-      return matchesCategory && matchesSearch;
+    // 1. Direct / Exact matches for query
+    const directMatches: Place[] = [];
+    const directIds = new Set<string>();
+
+    for (const place of placesSortedByProximity) {
+      if (selectedCategory !== 'all' && place.category !== selectedCategory) continue;
+
+      const nameMatch = place.name.toLowerCase().includes(q);
+      const cityMatch = place.city && place.city.toLowerCase().includes(q);
+      const areaMatch = place.area && place.area.toLowerCase().includes(q);
+      const stateMatch = place.state && place.state.toLowerCase().includes(q);
+      const descMatch = place.description.toLowerCase().includes(q);
+      const catMatch = place.category.toLowerCase().includes(q) || (q.includes('temple') && place.category === 'cultural_temples');
+      const perksMatch = place.studentPerks && place.studentPerks.some((p) => p.toLowerCase().includes(q));
+
+      if (nameMatch || cityMatch || areaMatch || stateMatch || descMatch || catMatch || perksMatch) {
+        directMatches.push(place);
+        directIds.add(place.id);
+      }
+    }
+
+    // Rank exact name/city matches to the very top
+    directMatches.sort((a, b) => {
+      const aName = a.name.toLowerCase();
+      const bName = b.name.toLowerCase();
+      const aExact = aName === q ? 4 : (aName.startsWith(q) ? 3 : (a.city.toLowerCase() === q ? 2 : 1));
+      const bExact = bName === q ? 4 : (bName.startsWith(q) ? 3 : (b.city.toLowerCase() === q ? 2 : 1));
+      if (bExact !== aExact) return bExact - aExact;
+      return (a.distanceKm ?? 9999) - (b.distanceKm ?? 9999);
     });
+
+    // 2. Discover near places around the searched location (within ~90 km radius)
+    const nearPlaces: Place[] = [];
+    if (directMatches.length > 0) {
+      const targetAnchor = directMatches[0];
+      const targetLat = targetAnchor.latitude;
+      const targetLng = targetAnchor.longitude;
+
+      if (targetLat && targetLng) {
+        for (const place of placesSortedByProximity) {
+          if (directIds.has(place.id)) continue;
+          if (selectedCategory !== 'all' && place.category !== selectedCategory) continue;
+
+          const distToSearched = calculateDistanceKm(targetLat, targetLng, place.latitude, place.longitude);
+          if (distToSearched <= 90) {
+            nearPlaces.push({
+              ...place,
+              distanceKm: Math.round(distToSearched * 10) / 10
+            });
+          }
+        }
+
+        nearPlaces.sort((a, b) => (a.distanceKm ?? 9999) - (b.distanceKm ?? 9999));
+      }
+    }
+
+    return [...directMatches, ...nearPlaces];
   }, [placesSortedByProximity, selectedCategory, searchQuery]);
 
   // Section 6: Student Budget Picks (<₹100, <₹250, <₹500, Free) sorted by proximity

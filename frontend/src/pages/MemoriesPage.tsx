@@ -79,15 +79,25 @@ const PAN_INDIA_MEMORIES: Memory[] = [
 ];
 
 export const MemoriesPage: React.FC<MemoriesPageProps> = ({ user }) => {
+  // Memories start completely empty for new users until they upload their own memories
   const [memories, setMemories] = useState<Memory[]>(() => {
     try {
       const stored = localStorage.getItem('twy_memories');
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) {
+          // Filter out any hardcoded demo memories so new accounts start completely empty
+          const userOnly = parsed.filter(
+            (m: any) =>
+              m &&
+              !['m1', 'm2', 'm3', 'm4', 'm5', 'mem-1', 'mem-2', 'mem-3', 'mem-4'].includes(m.id) &&
+              (m.userId === user?.id || m.userName === user?.fullName || m.isUserUploaded)
+          );
+          return userOnly;
+        }
       }
     } catch {}
-    return PAN_INDIA_MEMORIES;
+    return [];
   });
 
   const [isAdding, setIsAdding] = useState(false);
@@ -112,18 +122,25 @@ export const MemoriesPage: React.FC<MemoriesPageProps> = ({ user }) => {
     } catch {}
   }, [memories]);
 
-  // Optionally fetch backend memories on initial mount
+  // Fetch only this user's uploaded memories from backend/Supabase if logged in
   useEffect(() => {
-    fetchMemoriesBackend().then((serverMemories) => {
-      if (serverMemories && Array.isArray(serverMemories) && serverMemories.length > 0) {
-        setMemories((local) => {
-          const ids = new Set(local.map((m) => m.id));
-          const uniqueNew = serverMemories.filter((sm: any) => !ids.has(sm.id));
-          return [...uniqueNew, ...local];
-        });
-      }
-    });
-  }, []);
+    if (user?.id) {
+      fetchMemoriesBackend(user.id).then((serverMemories) => {
+        if (serverMemories && Array.isArray(serverMemories)) {
+          setMemories((local) => {
+            const ids = new Set(local.map((m) => m.id));
+            const uniqueUserMemories = serverMemories.filter(
+              (sm: any) =>
+                !ids.has(sm.id) &&
+                !['m1', 'm2', 'm3', 'm4', 'm5', 'mem-1', 'mem-2', 'mem-3', 'mem-4'].includes(sm.id) &&
+                (sm.userId === user.id || sm.userName === user.fullName)
+            );
+            return [...local, ...uniqueUserMemories];
+          });
+        }
+      });
+    }
+  }, [user?.id]);
 
   const toggleLike = (id: string) => {
     setMemories((prev) =>
@@ -152,7 +169,7 @@ export const MemoriesPage: React.FC<MemoriesPageProps> = ({ user }) => {
     if (!newMemory.title.trim() || !newMemory.place.trim()) return;
 
     const memory: Memory = {
-      id: `m${Date.now()}`,
+      id: `user-mem-${Date.now()}`,
       title: newMemory.title.trim(),
       place: newMemory.place.trim(),
       date: newMemory.date,
@@ -166,6 +183,7 @@ export const MemoriesPage: React.FC<MemoriesPageProps> = ({ user }) => {
       userName: user?.fullName || 'Student Traveler',
       userId: user?.id
     };
+    (memory as any).isUserUploaded = true;
 
     setMemories((prev) => [memory, ...prev]);
     setIsAdding(false);

@@ -1,7 +1,8 @@
 import type { CategoryInfo, Place } from '../types';
 import { PAN_INDIA_PLACES, ALL_INDIAN_STATES_UTS } from './indiaDestinations';
+import { ALL_INDIA_TEMPLES } from './indiaTemples';
 
-export { ALL_INDIAN_STATES_UTS, PAN_INDIA_PLACES };
+export { ALL_INDIAN_STATES_UTS, PAN_INDIA_PLACES, ALL_INDIA_TEMPLES };
 
 export const CATEGORIES: CategoryInfo[] = [
   {
@@ -767,12 +768,16 @@ const BASE_PLACES: Place[] = [
   },
 ];
 
-// Deduplicate and combine Pan-India places with base places
-const panPlaceIds = new Set(PAN_INDIA_PLACES.map((p) => p.id));
-export const INITIAL_FEATURED_PLACES: Place[] = [
-  ...PAN_INDIA_PLACES,
-  ...BASE_PLACES.filter((p) => !panPlaceIds.has(p.id)),
-];
+// Deduplicate and combine all temples, Pan-India destinations, and base places
+const existingIds = new Set<string>();
+export const INITIAL_FEATURED_PLACES: Place[] = [];
+
+for (const p of [...ALL_INDIA_TEMPLES, ...PAN_INDIA_PLACES, ...BASE_PLACES]) {
+  if (!existingIds.has(p.id)) {
+    existingIds.add(p.id);
+    INITIAL_FEATURED_PLACES.push(p);
+  }
+}
 
 export const POPULAR_SEARCH_QUERIES = [
   'Munnar tea hills Kerala',

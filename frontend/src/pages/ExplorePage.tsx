@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { MapPage } from './MapPage';
 import { DestinationSearchBar } from '../components/common/DestinationSearchBar';
-import { getPlacesWithLiveDistance } from '../utils/location';
+import { getPlacesWithLiveDistance, calculateDistanceKm } from '../utils/location';
 
 interface ExplorePageProps {
   savedPlaceIds: string[];
@@ -85,11 +85,15 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
   }, [userLat, userLng]);
 
   const filteredPlaces = useMemo(() => {
-    let places = placesWithLiveDistance.filter((p) => {
+    const q = query.trim().toLowerCase();
+
+    // Base filter function
+    const matchesGeneralFilters = (p: Place, isSearchedItem = false) => {
       if (filters.category !== 'all' && p.category !== filters.category) return false;
       if (p.approxCostForOne > filters.maxCost) return false;
       if (p.rating < filters.minRating) return false;
-      if (p.distanceKm !== undefined && p.distanceKm > filters.maxDistance) return false;
+      // Do not discard explicitly searched places for distance
+      if (!isSearchedItem && p.distanceKm !== undefined && p.distanceKm > filters.maxDistance) return false;
       if (filters.hasWifi && !p.hasWifi) return false;
       if (filters.hasCharging && !p.hasCharging) return false;
       if (filters.isOutdoor && !p.isOutdoor) return false;
@@ -104,34 +108,81 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
         if (filters.mood === 'entertainment' && p.category !== 'entertainment' && p.category !== 'theatres') return false;
         if (filters.mood === 'adventure' && p.category !== 'weekend_trips' && p.category !== 'viewpoints') return false;
       }
-
-      if (query.trim()) {
-        const q = query.toLowerCase().trim();
-        return (
-          p.name.toLowerCase().includes(q) ||
-          p.description.toLowerCase().includes(q) ||
-          (p.area && p.area.toLowerCase().includes(q)) ||
-          (p.city && p.city.toLowerCase().includes(q)) ||
-          (p.state && p.state.toLowerCase().includes(q)) ||
-          p.category.toLowerCase().includes(q) ||
-          (p.studentPerks && p.studentPerks.some((pk) => pk.toLowerCase().includes(q)))
-        );
-      }
       return true;
-    });
+    };
 
-    places = [...places].sort((a, b) => {
-      switch (sort) {
-        case 'distance': return (a.distanceKm ?? 9999) - (b.distanceKm ?? 9999);
-        case 'rating': return b.rating - a.rating;
-        case 'cost_asc': return a.approxCostForOne - b.approxCostForOne;
-        case 'cost_desc': return b.approxCostForOne - a.approxCostForOne;
-        case 'reviews': return b.reviewCount - a.reviewCount;
-        default: return (a.distanceKm ?? 9999) - (b.distanceKm ?? 9999);
+    if (!q) {
+      let places = placesWithLiveDistance.filter((p) => matchesGeneralFilters(p, false));
+      places = [...places].sort((a, b) => {
+        switch (sort) {
+          case 'distance': return (a.distanceKm ?? 9999) - (b.distanceKm ?? 9999);
+          case 'rating': return b.rating - a.rating;
+          case 'cost_asc': return a.approxCostForOne - b.approxCostForOne;
+          case 'cost_desc': return b.approxCostForOne - a.approxCostForOne;
+          case 'reviews': return b.reviewCount - a.reviewCount;
+          default: return (a.distanceKm ?? 9999) - (b.distanceKm ?? 9999);
+        }
+      });
+      return places;
+    }
+
+    // 1. Direct / Exact matches for query
+    const directMatches: Place[] = [];
+    const directIds = new Set<string>();
+
+    for (const p of placesWithLiveDistance) {
+      const nameMatch = p.name.toLowerCase().includes(q);
+      const descMatch = p.description.toLowerCase().includes(q);
+      const areaMatch = p.area && p.area.toLowerCase().includes(q);
+      const cityMatch = p.city && p.city.toLowerCase().includes(q);
+      const stateMatch = p.state && p.state.toLowerCase().includes(q);
+      const catMatch = p.category.toLowerCase().includes(q) || (q.includes('temple') && p.category === 'cultural_temples');
+      const perksMatch = p.studentPerks && p.studentPerks.some((pk) => pk.toLowerCase().includes(q));
+
+      if (nameMatch || descMatch || areaMatch || cityMatch || stateMatch || catMatch || perksMatch) {
+        if (matchesGeneralFilters(p, true)) {
+          directMatches.push(p);
+          directIds.add(p.id);
+        }
       }
+    }
+
+    // Rank exact matches at the top
+    directMatches.sort((a, b) => {
+      const aName = a.name.toLowerCase();
+      const bName = b.name.toLowerCase();
+      const aExact = aName === q ? 4 : (aName.startsWith(q) ? 3 : (a.city.toLowerCase() === q ? 2 : 1));
+      const bExact = bName === q ? 4 : (bName.startsWith(q) ? 3 : (b.city.toLowerCase() === q ? 2 : 1));
+      if (bExact !== aExact) return bExact - aExact;
+      return (a.distanceKm ?? 9999) - (b.distanceKm ?? 9999);
     });
 
-    return places;
+    // 2. Discover near places around the searched location (~90 km radius)
+    const nearPlaces: Place[] = [];
+    if (directMatches.length > 0) {
+      const targetAnchor = directMatches[0];
+      const targetLat = targetAnchor.latitude;
+      const targetLng = targetAnchor.longitude;
+
+      if (targetLat && targetLng) {
+        for (const p of placesWithLiveDistance) {
+          if (directIds.has(p.id)) continue;
+          if (!matchesGeneralFilters(p, false)) continue;
+
+          const distToSearched = calculateDistanceKm(targetLat, targetLng, p.latitude, p.longitude);
+          if (distToSearched <= 90) {
+            nearPlaces.push({
+              ...p,
+              distanceKm: Math.round(distToSearched * 10) / 10
+            });
+          }
+        }
+
+        nearPlaces.sort((a, b) => (a.distanceKm ?? 9999) - (b.distanceKm ?? 9999));
+      }
+    }
+
+    return [...directMatches, ...nearPlaces];
   }, [placesWithLiveDistance, filters, query, sort]);
 
   const resetFilters = () => {

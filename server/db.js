@@ -61,24 +61,7 @@ const INITIAL_DB = {
       createdAt: '2026-09-24T11:00:00.000Z'
     }
   ],
-  savedPlaces: [
-    {
-      id: 'sp-1',
-      userId: 'usr-1',
-      placeId: 'blr-cafe-1',
-      status: 'FAVORITE',
-      personalNote: 'Go here for Sunday morning sketching',
-      createdAt: '2026-09-21T09:00:00.000Z'
-    },
-    {
-      id: 'sp-2',
-      userId: 'usr-1',
-      placeId: 'blr-study-1',
-      status: 'WANT_TO_VISIT',
-      personalNote: 'Buy semester textbooks',
-      createdAt: '2026-09-23T16:00:00.000Z'
-    }
-  ],
+  savedPlaces: [],
   trips: [
     {
       id: 'trip-1',
@@ -102,56 +85,7 @@ const INITIAL_DB = {
     { id: 'exp-2', tripId: 'trip-1', description: 'Metro Smart Card Recharge', amount: 120, paidBy: 'Arjun', category: 'transport' },
     { id: 'exp-3', tripId: 'trip-1', description: 'Bowling 3 Games', amount: 540, paidBy: 'Pooja', category: 'activities' }
   ],
-  memories: [
-    {
-      id: 'mem-1',
-      userId: 'usr-1',
-      userName: 'Campus Explorer',
-      title: 'Lepakshi Monolith & Hanging Pillar 🛕',
-      place: 'Lepakshi, Sri Sathya Sai District, AP',
-      date: '2026-09-24',
-      note: 'College weekend expedition from campus! Stood beneath the colossal monolithic Nandi and tested passing cloth under the hanging pillar. Outstanding Vijayanagara stone carvings and zero ticket cost for students.',
-      imageUrl: 'https://images.unsplash.com/photo-1590050752117-238cb0fb12b1?auto=format&fit=crop&w=800&q=80',
-      liked: true,
-      tags: ['heritage', 'lepakshi', 'squadtrip', 'rayalaseema']
-    },
-    {
-      id: 'mem-2',
-      userId: 'usr-1',
-      userName: 'Hostel Squad',
-      title: 'Sunrise Ridge Trek at Penukonda Fort 🏔️',
-      place: 'Penukonda Fort, Anantapur District',
-      date: '2026-09-19',
-      note: 'Began the ascent at 5:00 AM with hostel friends. The rolling misty horizon of Rayalaseema from the watchtower was sensational. Hot ginger tea and mirchi bajjis at the foothill cost only ₹35!',
-      imageUrl: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=800&q=80',
-      liked: true,
-      tags: ['trek', 'sunrise', 'penukonda', 'budgetwin']
-    },
-    {
-      id: 'mem-3',
-      userId: 'usr-1',
-      userName: 'Student Backpacker',
-      title: 'Vistadome Glass Train to Araku Valley 🚂',
-      place: 'Araku Valley, Visakhapatnam',
-      date: '2026-09-12',
-      note: 'Rode through 58 mountain tunnels and cascading waterfalls in the Eastern Ghats. The fresh local bamboo chicken and organic coffee aroma in the hills was unforgettable.',
-      imageUrl: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=800&q=80',
-      liked: true,
-      tags: ['train', 'araku', 'nature', 'coffee']
-    },
-    {
-      id: 'mem-4',
-      userId: 'usr-1',
-      userName: 'Goa Crew',
-      title: 'Sunset Acoustic Jam at Vagator Beach 🌊',
-      place: 'Vagator, North Goa',
-      date: '2026-09-05',
-      note: 'Post-semester break getaway! Rented budget scooters for ₹350/day and gathered on the red cliffs overlooking the Arabian Sea as someone played guitar.',
-      imageUrl: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=800&q=80',
-      liked: true,
-      tags: ['beach', 'goa', 'semesterbreak', 'sunset']
-    }
-  ]
+  memories: []
 };
 
 // Initialize DB if not present

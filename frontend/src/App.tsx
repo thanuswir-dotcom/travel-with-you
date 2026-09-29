@@ -42,14 +42,22 @@ export default function App() {
     }
   });
 
-  // Saved places IDs persisted in localStorage
+  // Saved places IDs persisted in localStorage (starts clean and empty for new users)
   const [savedPlaceIds, setSavedPlaceIds] = useState<string[]>(() => {
     try {
       const stored = localStorage.getItem('twy_saved_places');
-      return stored ? JSON.parse(stored) : ['p-1', 'p-2', 'p-13'];
-    } catch {
-      return ['p-1', 'p-2', 'p-13'];
-    }
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          // Filter out legacy hardcoded demo IDs so new accounts start completely empty
+          const realSaved = parsed.filter(
+            (id: string) => !['p-1', 'p-2', 'p-13', 'blr-cafe-1', 'blr-study-1'].includes(id)
+          );
+          return realSaved;
+        }
+      }
+    } catch {}
+    return [];
   });
 
   // Current Location State (Restores live GPS detected location or initializes with clean detector)
@@ -178,6 +186,9 @@ export default function App() {
     setUser(null);
     try {
       localStorage.removeItem('twy_user');
+      localStorage.removeItem('twy_saved_places');
+      localStorage.removeItem('twy_memories');
+      setSavedPlaceIds([]);
     } catch {}
     setActiveTab('home');
   };

@@ -1,5 +1,6 @@
 // Travel With You - Seed Places Data across 12+ categories and student hubs
 import { PAN_INDIA_PLACES } from './panIndiaPlaces.js';
+import { ALL_INDIA_TEMPLES } from './indiaTemples.js';
 
 export const BASE_PLACES = [
   // ─── BENGALURU ─────────────────────────────────────────────────────────────
@@ -737,6 +738,7 @@ export const BASE_PLACES = [
 ];
 
 export const SEED_PLACES = [
+  ...ALL_INDIA_TEMPLES,
   ...BASE_PLACES,
-  ...PAN_INDIA_PLACES.filter(p => !BASE_PLACES.some(b => b.id === p.id))
+  ...PAN_INDIA_PLACES.filter(p => !BASE_PLACES.some(b => b.id === p.id) && !ALL_INDIA_TEMPLES.some(t => t.id === p.id))
 ];

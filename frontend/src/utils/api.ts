@@ -287,9 +287,10 @@ export async function updateProfileBackend(userData: {
   }
 }
 
-export async function fetchMemoriesBackend() {
+export async function fetchMemoriesBackend(userId?: string) {
   try {
-    const res = await fetch(`${BACKEND_URL}/memories`);
+    const url = userId ? `${BACKEND_URL}/memories?userId=${encodeURIComponent(userId)}` : `${BACKEND_URL}/memories`;
+    const res = await fetch(url);
     if (!res.ok) throw new Error('Failed to fetch memories');
     return await res.json();
   } catch (err) {

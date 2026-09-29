@@ -4,13 +4,16 @@ import { getSupabaseClient } from '../services/supabaseService.js';
 export const getMemories = async (req, res) => {
   const db = readDB();
   const supabase = getSupabaseClient();
+  const requestedUserId = req.query.userId;
   let supabaseMemories = [];
 
-  if (supabase) {
+  // If a specific user is requesting memories, only return their memories
+  if (supabase && requestedUserId) {
     try {
       const { data, error } = await supabase
         .from('memories')
         .select('*, user_profiles(full_name, college_name)')
+        .eq('user_id', requestedUserId)
         .order('created_at', { ascending: false });
 
       if (data && !error) {
@@ -39,8 +42,12 @@ export const getMemories = async (req, res) => {
     }
   }
 
-  // Combine Supabase memories with local database memories
-  const localMemories = db.memories || [];
+  // Combine with local user memories if matching the requested user
+  const localMemories = (db.memories || []).filter(lm => {
+    if (requestedUserId) return lm.userId === requestedUserId;
+    return false; // New users start with an empty journal
+  });
+
   const combined = [...supabaseMemories];
   for (const lm of localMemories) {
     if (!combined.some(c => c.id === lm.id || (c.title === lm.title && c.date === lm.date))) {

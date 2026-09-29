@@ -2,7 +2,12 @@ import { readDB, writeDB } from '../services/dbService.js';
 
 export const getSavedPlaces = (req, res) => {
   const db = readDB();
-  const saved = db.savedPlaces || [];
+  const userId = req.query.userId;
+  // Return saved places only for the specific requested user; new accounts start with empty wishlist
+  const saved = (db.savedPlaces || []).filter(s => {
+    if (userId) return s.userId === userId;
+    return false;
+  });
   const savedPlaces = saved.map(s => {
     const place = db.places.find(p => p.id === s.placeId);
     return {
