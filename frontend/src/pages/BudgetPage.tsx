@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet, Users, Plus, Trash2, Calculator, RotateCcw, ChevronDown, PiggyBank } from 'lucide-react';
+import { Wallet, Users, Plus, Trash2, Calculator, RotateCcw, ChevronDown, PiggyBank, Share2 } from 'lucide-react';
 
 interface Expense {
   id: string;
@@ -143,6 +143,23 @@ export const BudgetPage: React.FC = () => {
     ...cat,
     total: expenses.filter((e) => e.category === cat.id).reduce((s, e) => s + e.amount, 0),
   }));
+
+  const handleShareWhatsApp = () => {
+    if (!splitResult || friends.length === 0) return;
+    const each = (totalSpent / friends.length).toFixed(0);
+    const rows = friends.map(f => {
+      const net = splitResult[f.id] ?? 0;
+      if (net > 0) return `• *${f.name}* owes ₹${net.toFixed(0)}`;
+      if (net < 0) return `• *${f.name}* gets back ₹${Math.abs(net).toFixed(0)}`;
+      return `• *${f.name}*: All Settled ✓`;
+    }).join('\n');
+    const text = `💸 *Squad Bill Settlement via Travel With You!*\n\n` +
+      `💰 *Total Outing Spend:* ₹${totalSpent} (₹${each} each across ${friends.length} people)\n\n` +
+      `📊 *Settlement Breakdown:*\n${rows}\n\n` +
+      `✨ Manage squad trips & split expenses: https://travel-with-you.vercel.app`;
+    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  };
 
   return (
     <div className="min-h-screen py-8 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -435,13 +452,23 @@ export const BudgetPage: React.FC = () => {
                 </div>
               </div>
 
-              <button
-                onClick={() => { setSplitResult(null); setActiveSection('expenses'); }}
-                className="flex items-center gap-2 text-xs text-slate-400 hover:text-white transition-colors cursor-pointer"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                Recalculate
-              </button>
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  onClick={handleShareWhatsApp}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs cursor-pointer shadow-md shadow-emerald-600/20 transition-all"
+                  title="Share bill settlement on WhatsApp"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                  <span>Share Settlement on WhatsApp</span>
+                </button>
+                <button
+                  onClick={() => { setSplitResult(null); setActiveSection('expenses'); }}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 hover:text-white transition-colors cursor-pointer border border-slate-700"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Recalculate</span>
+                </button>
+              </div>
             </>
           ) : (
             <div className="text-center py-16 rounded-3xl border border-slate-800 border-dashed">

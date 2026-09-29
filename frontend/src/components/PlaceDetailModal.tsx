@@ -5,6 +5,7 @@ import {
   Navigation2, Share2, ShieldCheck, Tag, ThumbsUp, MessageSquare
 } from 'lucide-react';
 import { submitPlaceReview } from '../utils/api';
+import { WeatherWidget } from './WeatherWidget';
 
 interface PlaceDetailModalProps {
   place: Place | null;
@@ -182,6 +183,7 @@ export const PlaceDetailModal: React.FC<PlaceDetailModalProps> = ({
               <Share2 className="w-3.5 h-3.5" />
               Share
             </button>
+            <WeatherWidget city={place.city} lat={place.latitude} lng={place.longitude} showAdvice={false} className="ml-auto hidden sm:inline-flex" />
           </div>
 
           {/* Tab Switcher */}
@@ -298,6 +300,21 @@ export const PlaceDetailModal: React.FC<PlaceDetailModalProps> = ({
                     <ShieldCheck className="w-4 h-4" />
                     <span>Student Friendly</span>
                   </div>
+                </div>
+              </div>
+
+              {/* Transit & Commute Tip */}
+              <div className="p-4 rounded-2xl bg-cyan-950/20 border border-cyan-500/25 flex items-start gap-3">
+                <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 shrink-0 mt-0.5">
+                  <Navigation2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-cyan-300 uppercase tracking-wide mb-1">
+                    🚆 Student Transit & Metro Connectivity
+                  </h4>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Easily accessible via local metro lines, city suburban trains, and campus feeder buses. Tap "Get Directions" above to open Google Maps with live bus and metro timings tailored to your current location.
+                  </p>
                 </div>
               </div>
 

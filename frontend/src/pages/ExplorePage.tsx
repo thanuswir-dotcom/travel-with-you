@@ -11,6 +11,7 @@ import { MapPage } from './MapPage';
 import { DestinationSearchBar } from '../components/common/DestinationSearchBar';
 import { getPlacesWithLiveDistance, calculateDistanceKm, matchesPlaceSearch } from '../utils/location';
 import { fetchLiveMapPlaces } from '../utils/mapPlacesService';
+import { WeatherWidget } from '../components/WeatherWidget';
 
 interface ExplorePageProps {
   savedPlaceIds: string[];
@@ -527,12 +528,15 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
             )}
           </div>
 
-          {/* Results Summary */}
-          <div className="flex items-center justify-between mb-6">
-            <p className="text-sm text-slate-400">
-              Showing <strong className="text-white">{filteredPlaces.length}</strong> spots in {currentCity}
-            </p>
-            <span className="text-xs text-emerald-400 font-semibold">
+          {/* Results Summary & Weather */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="text-sm text-slate-400">
+                Showing <strong className="text-white">{filteredPlaces.length}</strong> spots in {currentCity}
+              </p>
+              <WeatherWidget city={currentCity || 'Chennai'} lat={userLat} lng={userLng} />
+            </div>
+            <span className="text-xs text-emerald-400 font-semibold self-start sm:self-auto">
               ✓ Verified for Student Affordability
             </span>
           </div>

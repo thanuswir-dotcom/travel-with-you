@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import {
   GraduationCap, Sparkles, Wallet, Clock, Users, MapPin,
   Zap, ChevronRight, RotateCcw, CheckCircle2, Loader2,
-  MessageCircle, Send, Bot, Navigation2
+  MessageCircle, Send, Bot, Navigation2, Share2, CheckSquare
 } from 'lucide-react';
 import { generateTripPlan, generateAIChat, isGeminiConfigured } from '../utils/gemini';
 import type { TripPlan, TripPlanRequest } from '../utils/gemini';
+import { SquadChecklist } from '../components/SquadChecklist';
+import { WeatherWidget } from '../components/WeatherWidget';
 
 interface PlannerPageProps {
   city: string;
@@ -38,7 +40,7 @@ export const PlannerPage: React.FC<PlannerPageProps> = ({ city }) => {
   const [tripPlan, setTripPlan] = useState<TripPlan | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isTripSaved, setIsTripSaved] = useState(false);
-  const [activeTab, setActiveTab] = useState<'planner' | 'chat'>('planner');
+  const [activeTab, setActiveTab] = useState<'planner' | 'chat' | 'checklist'>('planner');
 
   // Chat State
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
@@ -109,6 +111,18 @@ export const PlannerPage: React.FC<PlannerPageProps> = ({ city }) => {
 
   const budgetPerPerson = Math.floor(budget / Math.max(friends, 1));
 
+  const handleShareWhatsApp = () => {
+    if (!tripPlan) return;
+    const stopsList = tripPlan.stops.map((s, i) => `${i + 1}. *${s.name}* (${s.duration}) — ₹${s.estimatedCost}`).join('\n');
+    const text = `🌴 *Squad Trip Itinerary for ${city}!* (via Travel With You)\n\n` +
+      `👥 *Squad:* ${friends} friends | ⏱️ *Duration:* ${tripPlan.duration}\n` +
+      `💰 *Estimated Budget:* ₹${tripPlan.totalEstimatedCost}/person (Total: ₹${tripPlan.totalEstimatedCost * friends})\n\n` +
+      `📍 *Planned Stops:*\n${stopsList}\n\n` +
+      `✨ Customise or explore more spots: https://travel-with-you.vercel.app`;
+    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  };
+
   return (
     <div className="min-h-screen py-8 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
       {/* Header */}
@@ -123,31 +137,47 @@ export const PlannerPage: React.FC<PlannerPageProps> = ({ city }) => {
         <p className="text-slate-400 text-sm max-w-xl mx-auto">
           Tell the AI your budget, squad size, and time available — get a complete multi-stop itinerary with cost breakdown in seconds.
         </p>
+
+        {/* Live Weather Integration */}
+        <div className="mt-3.5 flex justify-center">
+          <WeatherWidget city={city} />
+        </div>
       </div>
 
       {/* Tab switcher */}
-      <div className="flex bg-slate-900/80 border border-slate-800 rounded-2xl p-1 mb-8 max-w-xs mx-auto">
+      <div className="flex bg-slate-900/80 border border-slate-800 rounded-2xl p-1 mb-8 max-w-md mx-auto">
         <button
           onClick={() => setActiveTab('planner')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             activeTab === 'planner'
               ? 'bg-emerald-500 text-slate-950 shadow-lg'
               : 'text-slate-400 hover:text-white'
           }`}
         >
           <Sparkles className="w-3.5 h-3.5" />
-          Trip Planner
+          <span>Trip Planner</span>
         </button>
         <button
           onClick={() => setActiveTab('chat')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             activeTab === 'chat'
               ? 'bg-emerald-500 text-slate-950 shadow-lg'
               : 'text-slate-400 hover:text-white'
           }`}
         >
           <MessageCircle className="w-3.5 h-3.5" />
-          AI Chat
+          <span>TripBot AI</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('checklist')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            activeTab === 'checklist'
+              ? 'bg-emerald-500 text-slate-950 shadow-lg'
+              : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <CheckSquare className="w-3.5 h-3.5" />
+          <span>Squad Packing</span>
         </button>
       </div>
 
@@ -323,7 +353,15 @@ export const PlannerPage: React.FC<PlannerPageProps> = ({ city }) => {
                       <span className="flex items-center gap-1"><MapPin className="w-3 h-3 text-cyan-400" />{tripPlan.stops.length} stops</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={handleShareWhatsApp}
+                      className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all cursor-pointer shadow-md shadow-emerald-600/20"
+                      title="Share itinerary on WhatsApp with your squad"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                      <span>WhatsApp Squad</span>
+                    </button>
                     <button
                       onClick={handleSaveTrip}
                       className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
@@ -531,6 +569,13 @@ export const PlannerPage: React.FC<PlannerPageProps> = ({ city }) => {
               <Send className="w-4 h-4" />
             </button>
           </div>
+        </div>
+      )}
+
+      {/* ── SQUAD PACKING CHECKLIST TAB ────────────────────────────────── */}
+      {activeTab === 'checklist' && (
+        <div className="animate-in fade-in slide-in-from-bottom-3 duration-200">
+          <SquadChecklist />
         </div>
       )}
     </div>
