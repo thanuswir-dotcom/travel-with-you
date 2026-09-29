@@ -10,6 +10,7 @@ import {
 import { MapPage } from './MapPage';
 import { DestinationSearchBar } from '../components/common/DestinationSearchBar';
 import { getPlacesWithLiveDistance, calculateDistanceKm } from '../utils/location';
+import { fetchLiveMapPlaces } from '../utils/mapPlacesService';
 
 interface ExplorePageProps {
   savedPlaceIds: string[];
@@ -79,10 +80,39 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
     return count;
   }, [filters]);
 
+  // Live Map Places from OpenStreetMap when searching any town/city on maps
+  const [liveMapPlaces, setLiveMapPlaces] = useState<Place[]>([]);
+  const [isSearchingLiveMap, setIsSearchingLiveMap] = useState(false);
+
   // 1. Calculate live geographical distance for all places based on userLat & userLng
   const placesWithLiveDistance = useMemo(() => {
     return getPlacesWithLiveDistance(INITIAL_FEATURED_PLACES, userLat, userLng);
   }, [userLat, userLng]);
+
+  // Query live OpenStreetMap POIs if local search yields fewer than 4 matches
+  React.useEffect(() => {
+    const q = query.trim();
+    if (!q || q.length < 2) {
+      setLiveMapPlaces([]);
+      return;
+    }
+
+    const localMatches = placesWithLiveDistance.filter(p => 
+      p.name.toLowerCase().includes(q.toLowerCase()) || 
+      p.city.toLowerCase().includes(q.toLowerCase()) || 
+      (p.area && p.area.toLowerCase().includes(q.toLowerCase()))
+    );
+
+    if (localMatches.length < 4) {
+      setIsSearchingLiveMap(true);
+      fetchLiveMapPlaces(q, userLat, userLng).then((osmPlaces) => {
+        setLiveMapPlaces(osmPlaces);
+        setIsSearchingLiveMap(false);
+      }).catch(() => setIsSearchingLiveMap(false));
+    } else {
+      setLiveMapPlaces([]);
+    }
+  }, [query, userLat, userLng, placesWithLiveDistance]);
 
   const filteredPlaces = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -182,8 +212,19 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
       }
     }
 
-    return [...directMatches, ...nearPlaces];
-  }, [placesWithLiveDistance, filters, query, sort]);
+    const allFound = [...directMatches, ...liveMapPlaces.filter(p => matchesGeneralFilters(p, true))];
+    const uniqueIds = new Set<string>();
+    const deduplicatedMatches: Place[] = [];
+    for (const p of allFound) {
+      if (!uniqueIds.has(p.id) && !uniqueIds.has(p.name.toLowerCase())) {
+        uniqueIds.add(p.id);
+        uniqueIds.add(p.name.toLowerCase());
+        deduplicatedMatches.push(p);
+      }
+    }
+
+    return [...deduplicatedMatches, ...nearPlaces];
+  }, [placesWithLiveDistance, filters, query, sort, liveMapPlaces]);
 
   const resetFilters = () => {
     setFilters(defaultFilters);

@@ -33,7 +33,9 @@ export const PlaceCard: React.FC<PlaceCardProps> = ({
 
   const handleDirections = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const query = encodeURIComponent(`${place.name} ${place.address} ${place.city}`);
+    const query = (place.latitude && place.longitude)
+      ? `${place.latitude},${place.longitude}`
+      : encodeURIComponent(`${place.name} ${place.address} ${place.city}`);
     window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
   };
 

@@ -1,8 +1,9 @@
 import type { CategoryInfo, Place } from '../types';
 import { PAN_INDIA_PLACES, ALL_INDIAN_STATES_UTS } from './indiaDestinations';
 import { ALL_INDIA_TEMPLES } from './indiaTemples';
+import { CHENNAI_PLACES } from './chennaiDestinations';
 
-export { ALL_INDIAN_STATES_UTS, PAN_INDIA_PLACES, ALL_INDIA_TEMPLES };
+export { ALL_INDIAN_STATES_UTS, PAN_INDIA_PLACES, ALL_INDIA_TEMPLES, CHENNAI_PLACES };
 
 export const CATEGORIES: CategoryInfo[] = [
   {
@@ -772,7 +773,7 @@ const BASE_PLACES: Place[] = [
 const existingIds = new Set<string>();
 export const INITIAL_FEATURED_PLACES: Place[] = [];
 
-for (const p of [...ALL_INDIA_TEMPLES, ...PAN_INDIA_PLACES, ...BASE_PLACES]) {
+for (const p of [...CHENNAI_PLACES, ...ALL_INDIA_TEMPLES, ...PAN_INDIA_PLACES, ...BASE_PLACES]) {
   if (!existingIds.has(p.id)) {
     existingIds.add(p.id);
     INITIAL_FEATURED_PLACES.push(p);

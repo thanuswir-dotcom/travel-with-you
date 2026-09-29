@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { fetchWeather, sendAIChat, type WeatherData } from '../utils/api';
 import { getPlacesWithLiveDistance, calculateDistanceKm } from '../utils/location';
+import { fetchLiveMapPlaces } from '../utils/mapPlacesService';
 
 interface LandingPageProps {
   location: LocationState;
@@ -46,10 +47,40 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   // Food Filter for Section 8
   const [foodCategory, setFoodCategory] = useState<string>('all');
 
+  // Live Map Places from OpenStreetMap when searching any town/city on maps
+  const [liveMapPlaces, setLiveMapPlaces] = useState<Place[]>([]);
+  const [isSearchingLiveMap, setIsSearchingLiveMap] = useState(false);
+  const [visiblePlacesCount, setVisiblePlacesCount] = useState(9);
+
   // 1. Calculate live geographical distance for all places based on user's live latitude & longitude
   const placesWithDistance = React.useMemo(() => {
     return getPlacesWithLiveDistance(INITIAL_FEATURED_PLACES, location.latitude, location.longitude);
   }, [location.latitude, location.longitude]);
+
+  // Query live OpenStreetMap POIs if local search yields fewer than 4 matches
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (!q || q.length < 2) {
+      setLiveMapPlaces([]);
+      return;
+    }
+
+    const localMatches = placesWithDistance.filter(p => 
+      p.name.toLowerCase().includes(q.toLowerCase()) || 
+      p.city.toLowerCase().includes(q.toLowerCase()) || 
+      (p.area && p.area.toLowerCase().includes(q.toLowerCase()))
+    );
+
+    if (localMatches.length < 4) {
+      setIsSearchingLiveMap(true);
+      fetchLiveMapPlaces(q, location.latitude, location.longitude).then((osmPlaces) => {
+        setLiveMapPlaces(osmPlaces);
+        setIsSearchingLiveMap(false);
+      }).catch(() => setIsSearchingLiveMap(false));
+    } else {
+      setLiveMapPlaces([]);
+    }
+  }, [searchQuery, location.latitude, location.longitude, placesWithDistance]);
 
   // 2. Sort all places by true physical proximity to user's live geo coordinates
   const placesSortedByProximity = React.useMemo(() => {
@@ -152,8 +183,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       }
     }
 
-    return [...directMatches, ...nearPlaces];
-  }, [placesSortedByProximity, selectedCategory, searchQuery]);
+    const allFound = [...directMatches, ...liveMapPlaces];
+    const uniqueIds = new Set<string>();
+    const deduplicatedMatches: Place[] = [];
+    for (const p of allFound) {
+      if (!uniqueIds.has(p.id) && !uniqueIds.has(p.name.toLowerCase())) {
+        uniqueIds.add(p.id);
+        uniqueIds.add(p.name.toLowerCase());
+        deduplicatedMatches.push(p);
+      }
+    }
+
+    return [...deduplicatedMatches, ...nearPlaces];
+  }, [placesSortedByProximity, selectedCategory, searchQuery, liveMapPlaces]);
 
   // Section 6: Student Budget Picks (<₹100, <₹250, <₹500, Free) sorted by proximity
   const budgetPicks = React.useMemo(() => {
@@ -406,28 +448,37 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold mb-2">
               <MapPin className="w-3.5 h-3.5" />
-              <span>Campus Hotspots in {location.area}, {location.city}</span>
+              <span>Campus Hotspots in {location.area && location.area.toLowerCase() !== location.city.toLowerCase() ? `${location.area}, ${location.city}` : location.city}</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
               {searchQuery ? `Results for "${searchQuery}"` : selectedCategory !== 'all' ? `Category: ${selectedCategory.replace('_', ' ')}` : 'Top Student Picks Nearby'}
             </h2>
             <p className="text-sm text-slate-400 mt-1">
-              Affordable, tested, and loved by college students in {location.city}.
+              {searchQuery 
+                ? `Found ${filteredPlaces.length} verified map spots for "${searchQuery}".` 
+                : `Affordable, tested, and loved by college students in ${location.city}.`}
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="text-xs text-slate-400 hover:text-white underline cursor-pointer"
+                className="text-xs text-slate-400 hover:text-white underline cursor-pointer mr-1"
               >
                 Clear Search
               </button>
             )}
             <button
+              onClick={() => setActiveTab('map')}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md shadow-emerald-500/20 transition-all cursor-pointer"
+            >
+              <Compass className="w-3.5 h-3.5" />
+              <span>Explore on Live Map</span>
+            </button>
+            <button
               onClick={() => setActiveTab('explore')}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-emerald-400 border border-slate-800 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-emerald-400 border border-slate-800 transition-colors cursor-pointer"
             >
               <span>View All Places</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -435,18 +486,75 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
         </div>
 
+        {/* Live Map Real-Time Search Status */}
+        {isSearchingLiveMap && (
+          <div className="mb-6 p-4 rounded-2xl bg-emerald-950/30 border border-emerald-500/30 flex items-center justify-between text-xs text-emerald-300 animate-pulse">
+            <div className="flex items-center gap-2.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+              <span>Scanning real-time OpenStreetMap & satellite data for every place in <strong>"{searchQuery}"</strong>...</span>
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400/80">Satellite Live</span>
+          </div>
+        )}
+
         {/* Place Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredPlaces.slice(0, 6).map((place) => (
-            <PlaceCard
-              key={place.id}
-              place={place}
-              isSaved={savedPlaceIds.includes(place.id)}
-              onToggleSave={onToggleSave}
-              onViewDetails={onViewPlaceDetails}
-            />
-          ))}
-        </div>
+        {filteredPlaces.length === 0 ? (
+          <div className="text-center py-16 px-4 rounded-3xl bg-slate-900/60 border border-slate-800">
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-2xl mb-3">
+              🗺️
+            </div>
+            <h3 className="text-lg font-bold text-white mb-1">
+              {isSearchingLiveMap ? `Locating map places for "${searchQuery}"...` : `Looking for places in "${searchQuery}"`}
+            </h3>
+            <p className="text-xs text-slate-400 max-w-md mx-auto mb-5">
+              {isSearchingLiveMap 
+                ? 'Scanning satellite GPS & OpenStreetMap data for attractions, heritage sites, and cafes...'
+                : 'Open live map navigation to explore this exact area and discover nearby attractions!'}
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <button
+                onClick={() => {
+                  const q = encodeURIComponent(`${searchQuery} tourist attractions places to visit`);
+                  window.open(`https://www.google.com/maps/search/?api=1&query=${q}`, '_blank');
+                }}
+                className="px-5 py-2.5 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs hover:bg-emerald-400 transition-all shadow-lg cursor-pointer"
+              >
+                Open "{searchQuery}" on Google Maps →
+              </button>
+              <button
+                onClick={() => setActiveTab('map')}
+                className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs border border-slate-700 transition-all cursor-pointer"
+              >
+                View Live Hotspot Map
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredPlaces.slice(0, searchQuery ? visiblePlacesCount : 6).map((place) => (
+                <PlaceCard
+                  key={place.id}
+                  place={place}
+                  isSaved={savedPlaceIds.includes(place.id)}
+                  onToggleSave={onToggleSave}
+                  onViewDetails={onViewPlaceDetails}
+                />
+              ))}
+            </div>
+
+            {searchQuery && filteredPlaces.length > visiblePlacesCount && (
+              <div className="mt-8 text-center">
+                <button
+                  onClick={() => setVisiblePlacesCount((c) => c + 9)}
+                  className="px-6 py-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-all cursor-pointer shadow-md"
+                >
+                  Show More Places ({filteredPlaces.length - visiblePlacesCount} more) ↓
+                </button>
+              </div>
+            )}
+          </>
+        )}
       </section>
 
       {/* ── SECTION 6: STUDENT BUDGET PICKS ─────────────────────────────────── */}
