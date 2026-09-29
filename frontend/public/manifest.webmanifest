@@ -1,0 +1,65 @@
+{
+  "id": "/?source=pwa",
+  "name": "Travel With You — Smart Student Travel Companion",
+  "short_name": "TravelWithYou",
+  "description": "AI-powered travel & discovery companion for college students. Find budget cafes, hidden spots, split bills, and plan squad outings.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "background_color": "#090d16",
+  "theme_color": "#090d16",
+  "lang": "en-US",
+  "dir": "ltr",
+  "categories": ["travel", "lifestyle", "education", "social"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "AI Trip Planner",
+      "short_name": "AI Planner",
+      "description": "Generate an instant budget student itinerary",
+      "url": "/?action=planner",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Nearby Student Cafes",
+      "short_name": "Cafes",
+      "description": "Find budget study spots with free Wi-Fi",
+      "url": "/?category=cafes",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Saved Places & Wishlist",
+      "short_name": "Saved",
+      "description": "Quickly access your bookmarked hangouts",
+      "url": "/?view=saved",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "prefer_related_applications": false
+}

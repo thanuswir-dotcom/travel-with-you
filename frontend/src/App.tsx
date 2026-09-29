@@ -9,6 +9,7 @@ import { SurpriseMeModal } from './components/SurpriseMeModal';
 import { CitySelectorModal } from './components/CitySelectorModal';
 import { LoginForm } from './components/auth/LoginForm';
 import { SignupForm } from './components/auth/SignupForm';
+import { PWAInstallBanner } from './components/PWAInstallBanner';
 
 import { LandingPage } from './pages/LandingPage';
 import { ExplorePage } from './pages/ExplorePage';
@@ -288,6 +289,9 @@ export default function App() {
           />
         </div>
       )}
+
+      {/* Progressive Web App Install & Offline Notification */}
+      <PWAInstallBanner />
 
     </div>
   );
