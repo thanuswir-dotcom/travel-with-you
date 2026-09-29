@@ -74,10 +74,12 @@ export const PWAInstallBanner: React.FC = () => {
       {!installed && !isDismissed && canInstall && (
         <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-6 md:max-w-md z-40 bg-slate-900/95 border border-emerald-500/30 rounded-2xl p-4 shadow-2xl backdrop-blur-xl transition-all animate-in slide-in-from-bottom duration-300">
           <div className="flex items-start gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 p-0.5 shrink-0 shadow-lg shadow-emerald-500/20">
-              <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-                <Smartphone className="w-6 h-6 text-emerald-400" />
-              </div>
+            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-amber-400/40 shadow-lg shadow-amber-500/20 bg-[#fcf9f2] shrink-0">
+              <img 
+                src="/logo.png" 
+                alt="Travel With You Logo" 
+                className="w-full h-full object-cover"
+              />
             </div>
 
             <div className="flex-1 min-w-0">

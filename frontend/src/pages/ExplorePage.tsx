@@ -552,8 +552,8 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
             </div>
           ) : (
             <div className="text-center py-16 sm:py-20 rounded-3xl border border-slate-800 bg-slate-900/40 p-8 space-y-4">
-              <div className="w-16 h-16 rounded-3xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center mx-auto text-3xl">
-                🧭
+              <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-amber-400/40 shadow-lg shadow-amber-500/20 bg-[#fcf9f2] flex items-center justify-center mx-auto">
+                <img src="/logo.png" alt="Travel With You Logo" className="w-full h-full object-cover" />
               </div>
               <h3 className="text-xl font-bold text-white">
                 {query ? `No destinations found for "${query}"` : 'No spots found matching your filter'}

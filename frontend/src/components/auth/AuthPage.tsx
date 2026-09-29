@@ -30,12 +30,16 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
       {/* Top Simple Brand Header */}
       <header className="w-full border-b border-slate-900 bg-slate-950/60 backdrop-blur-xl px-4 sm:px-8 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-            <Compass className="w-5 h-5 text-slate-950 animate-[spin_16s_linear_infinite]" />
+          <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-amber-400/40 shadow-lg shadow-amber-500/20 bg-[#fcf9f2] flex items-center justify-center shrink-0">
+            <img 
+              src="/logo.png" 
+              alt="Travel With You Logo" 
+              className="w-full h-full object-cover"
+            />
           </div>
           <div>
-            <span className="text-base sm:text-lg font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
-              Travel With Me
+            <span className="text-base sm:text-lg font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-amber-200 bg-clip-text text-transparent">
+              Travel With You
             </span>
             <span className="hidden sm:inline-block ml-2 text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
               India Edition

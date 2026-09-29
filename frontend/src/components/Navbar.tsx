@@ -59,12 +59,16 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={() => setActiveTab('home')}
             className="flex items-center gap-3 cursor-pointer group"
           >
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform duration-200">
-              <Compass className="w-6 h-6 text-slate-950 animate-[spin_12s_linear_infinite]" />
+            <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-full overflow-hidden border-2 border-amber-400/40 shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform duration-200 bg-[#fcf9f2] flex items-center justify-center shrink-0">
+              <img 
+                src="/logo.png" 
+                alt="Travel With You Logo" 
+                className="w-full h-full object-cover"
+              />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-lg sm:text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
+                <span className="text-lg sm:text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-amber-200 bg-clip-text text-transparent">
                   Travel With You
                 </span>
                 {isDemoMode && (
@@ -73,8 +77,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-slate-400 hidden sm:block">
-                Smart Student Travel & Discovery
+              <p className="text-[11px] text-amber-200/80 font-medium hidden sm:block tracking-wide">
+                Explore • Discover • Experience
               </p>
             </div>
           </div>
