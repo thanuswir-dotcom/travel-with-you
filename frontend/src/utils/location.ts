@@ -13,7 +13,7 @@ const KNOWN_HUBS = [
   { city: 'Jaipur', area: 'C-Scheme & Malviya Nagar', lat: 26.9124, lng: 75.7873 }
 ];
 
-function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+export function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Earth radius in km
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
@@ -23,6 +23,28 @@ function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: num
     Math.sin(dLon/2) * Math.sin(dLon/2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   return R * c;
+}
+
+export function getPlacesWithLiveDistance<T extends { latitude: number; longitude: number; distanceKm?: number }>(
+  places: T[],
+  userLat?: number,
+  userLng?: number
+): T[] {
+  if (userLat === undefined || userLng === undefined || isNaN(userLat) || isNaN(userLng)) {
+    return places;
+  }
+
+  return places.map(p => {
+    let distanceKm = p.distanceKm;
+    if (p.latitude && p.longitude) {
+      const d = calculateDistanceKm(userLat, userLng, p.latitude, p.longitude);
+      distanceKm = Math.round(d * 10) / 10;
+    }
+    return {
+      ...p,
+      distanceKm
+    };
+  });
 }
 
 export async function detectLiveLocation(): Promise<LocationState> {

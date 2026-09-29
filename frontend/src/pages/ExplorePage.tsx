@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { MapPage } from './MapPage';
 import { DestinationSearchBar } from '../components/common/DestinationSearchBar';
+import { getPlacesWithLiveDistance } from '../utils/location';
 
 interface ExplorePageProps {
   savedPlaceIds: string[];
@@ -16,9 +17,11 @@ interface ExplorePageProps {
   setActiveTab: (tab: ActiveTab) => void;
   onViewPlaceDetails: (place: Place) => void;
   currentCity?: string;
+  userLat?: number;
+  userLng?: number;
 }
 
-type SortOption = 'rating' | 'cost_asc' | 'cost_desc' | 'reviews' | 'distance';
+type SortOption = 'distance' | 'rating' | 'cost_asc' | 'cost_desc' | 'reviews';
 type MoodOption = 'all' | 'friends' | 'solo' | 'study' | 'food' | 'photography' | 'relaxing' | 'entertainment' | 'adventure';
 
 interface Filters {
@@ -37,7 +40,7 @@ const defaultFilters: Filters = {
   category: 'all',
   maxCost: 1000,
   minRating: 0,
-  maxDistance: 20,
+  maxDistance: 150,
   mood: 'all',
   hasWifi: false,
   hasCharging: false,
@@ -51,10 +54,12 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
   setActiveTab,
   onViewPlaceDetails,
   currentCity = 'Bengaluru',
+  userLat,
+  userLng,
 }) => {
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState<Filters>(defaultFilters);
-  const [sort, setSort] = useState<SortOption>('rating');
+  const [sort, setSort] = useState<SortOption>('distance');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
 
@@ -72,12 +77,17 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
     return count;
   }, [filters]);
 
+  // 1. Calculate live geographical distance for all places based on userLat & userLng
+  const placesWithLiveDistance = useMemo(() => {
+    return getPlacesWithLiveDistance(INITIAL_FEATURED_PLACES, userLat, userLng);
+  }, [userLat, userLng]);
+
   const filteredPlaces = useMemo(() => {
-    let places = INITIAL_FEATURED_PLACES.filter((p) => {
+    let places = placesWithLiveDistance.filter((p) => {
       if (filters.category !== 'all' && p.category !== filters.category) return false;
       if (p.approxCostForOne > filters.maxCost) return false;
       if (p.rating < filters.minRating) return false;
-      if (p.distanceKm && p.distanceKm > filters.maxDistance) return false;
+      if (p.distanceKm !== undefined && p.distanceKm > filters.maxDistance) return false;
       if (filters.hasWifi && !p.hasWifi) return false;
       if (filters.hasCharging && !p.hasCharging) return false;
       if (filters.isOutdoor && !p.isOutdoor) return false;
@@ -110,17 +120,17 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
 
     places = [...places].sort((a, b) => {
       switch (sort) {
+        case 'distance': return (a.distanceKm ?? 9999) - (b.distanceKm ?? 9999);
         case 'rating': return b.rating - a.rating;
         case 'cost_asc': return a.approxCostForOne - b.approxCostForOne;
         case 'cost_desc': return b.approxCostForOne - a.approxCostForOne;
         case 'reviews': return b.reviewCount - a.reviewCount;
-        case 'distance': return (a.distanceKm ?? 99) - (b.distanceKm ?? 99);
-        default: return 0;
+        default: return (a.distanceKm ?? 9999) - (b.distanceKm ?? 9999);
       }
     });
 
     return places;
-  }, [filters, query, sort]);
+  }, [placesWithLiveDistance, filters, query, sort]);
 
   const resetFilters = () => {
     setFilters(defaultFilters);
@@ -180,6 +190,10 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
         <MapPage
           savedPlaceIds={savedPlaceIds}
           onToggleSave={onToggleSave}
+          onViewPlaceDetails={onViewPlaceDetails}
+          userLat={userLat}
+          userLng={userLng}
+          currentCity={currentCity}
         />
       ) : (
         <>

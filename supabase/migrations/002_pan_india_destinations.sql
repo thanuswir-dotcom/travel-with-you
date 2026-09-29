@@ -326,6 +326,138 @@ INSERT INTO places (
   review_count, opening_time, closing_time, image_url,
   has_wifi, has_charging, is_quiet, is_outdoor, is_student_friendly, student_perks
 ) VALUES (
+  'Penukonda Fort & Gagan Mahal Palace',
+  'viewpoints',
+  'Ancient hill citadel and second capital of the Vijayanagara Empire. Climb to the watchtower ruins for sweeping views of the Rayalaseema valley and sunset.',
+  'Penukonda Hill, Sri Sathya Sai District',
+  'Penukonda (Near Gorantla)',
+  'Gorantla',
+  'Andhra Pradesh',
+  14.0847,
+  77.5958,
+  1,
+  30,
+  4.7,
+  8400,
+  '06:00',
+  '18:30',
+  'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80',
+  false,
+  false,
+  true,
+  true,
+  true,
+  ARRAY['Free Entry to Fort Ruins', 'Epic Hilltop Sunset Trek', 'Just 25km from Gorantla']::TEXT[]
+)
+ON CONFLICT (name, city) DO UPDATE SET
+  state = EXCLUDED.state,
+  category = EXCLUDED.category,
+  description = EXCLUDED.description,
+  address = EXCLUDED.address,
+  area = EXCLUDED.area,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  price_level = EXCLUDED.price_level,
+  approx_cost_for_one = EXCLUDED.approx_cost_for_one,
+  rating = EXCLUDED.rating,
+  review_count = EXCLUDED.review_count,
+  image_url = EXCLUDED.image_url,
+  student_perks = EXCLUDED.student_perks;
+
+INSERT INTO places (
+  name, category, description, address, area, city, state,
+  latitude, longitude, price_level, approx_cost_for_one, rating,
+  review_count, opening_time, closing_time, image_url,
+  has_wifi, has_charging, is_quiet, is_outdoor, is_student_friendly, student_perks
+) VALUES (
+  'Puttaparthi Chaitanya Jyothi & Peace Gardens',
+  'parks_nature',
+  'Serene world-renowned spiritual center with grand lotus-shaped architecture, Chinese and Japanese style roof pagodas, peaceful reflection lawns, and hill viewpoints.',
+  'Main Road, Puttaparthi',
+  'Puttaparthi (Near Gorantla)',
+  'Gorantla',
+  'Andhra Pradesh',
+  14.1678,
+  77.8105,
+  1,
+  50,
+  4.8,
+  15600,
+  '08:00',
+  '19:00',
+  'https://images.unsplash.com/photo-1473448912268-2022ce9509d8?auto=format&fit=crop&w=800&q=80',
+  true,
+  false,
+  true,
+  true,
+  true,
+  ARRAY['Free Entry & Meditation Halls', 'Subsidized Pure Veg Meals ₹40', 'Quiet Study Ambience']::TEXT[]
+)
+ON CONFLICT (name, city) DO UPDATE SET
+  state = EXCLUDED.state,
+  category = EXCLUDED.category,
+  description = EXCLUDED.description,
+  address = EXCLUDED.address,
+  area = EXCLUDED.area,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  price_level = EXCLUDED.price_level,
+  approx_cost_for_one = EXCLUDED.approx_cost_for_one,
+  rating = EXCLUDED.rating,
+  review_count = EXCLUDED.review_count,
+  image_url = EXCLUDED.image_url,
+  student_perks = EXCLUDED.student_perks;
+
+INSERT INTO places (
+  name, category, description, address, area, city, state,
+  latitude, longitude, price_level, approx_cost_for_one, rating,
+  review_count, opening_time, closing_time, image_url,
+  has_wifi, has_charging, is_quiet, is_outdoor, is_student_friendly, student_perks
+) VALUES (
+  'Gandikota "Grand Canyon of India" Gorge & Fort',
+  'weekend_trips',
+  'Breathtaking 300-foot deep river canyon carved by the Pennar River into red granite cliffs. Camping on cliffs, ancient fort gates, and star gazing for college groups.',
+  'Gandikota, Jammalamadugu Road',
+  'Gandikota Canyon',
+  'Anantapur',
+  'Andhra Pradesh',
+  14.8152,
+  78.2862,
+  1,
+  250,
+  4.9,
+  32000,
+  '00:00',
+  '23:59',
+  'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80',
+  false,
+  false,
+  true,
+  true,
+  true,
+  ARRAY['100% Free Public Canyon Access', 'Night Tent Camping', 'Famous Student Roadtrip']::TEXT[]
+)
+ON CONFLICT (name, city) DO UPDATE SET
+  state = EXCLUDED.state,
+  category = EXCLUDED.category,
+  description = EXCLUDED.description,
+  address = EXCLUDED.address,
+  area = EXCLUDED.area,
+  latitude = EXCLUDED.latitude,
+  longitude = EXCLUDED.longitude,
+  price_level = EXCLUDED.price_level,
+  approx_cost_for_one = EXCLUDED.approx_cost_for_one,
+  rating = EXCLUDED.rating,
+  review_count = EXCLUDED.review_count,
+  image_url = EXCLUDED.image_url,
+  student_perks = EXCLUDED.student_perks;
+
+INSERT INTO places (
+  name, category, description, address, area, city, state,
+  latitude, longitude, price_level, approx_cost_for_one, rating,
+  review_count, opening_time, closing_time, image_url,
+  has_wifi, has_charging, is_quiet, is_outdoor, is_student_friendly, student_perks
+) VALUES (
   'Charminar & Laad Bazaar Street Food Walk',
   'street_food',
   'World-famous 16th-century monument surrounded by buzzing markets serving authentic Irani Chai, Osmania biscuits, mutton haleem, and pearl bazaars.',

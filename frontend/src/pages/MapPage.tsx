@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { INITIAL_FEATURED_PLACES } from '../utils/constants';
+import { calculateDistanceKm } from '../utils/location';
 import { MapPin, Navigation2, Info, X, Layers, ZoomIn, ZoomOut } from 'lucide-react';
 import type { Place } from '../types';
 
@@ -68,22 +69,32 @@ export const MapPage: React.FC<MapPageProps> = ({
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [zoom, setZoom] = useState(1);
 
-  // Filter to places for current city if available, otherwise fallback to default places
+  // Filter to places closest to user's live geo coordinates
   const cityPlaces = React.useMemo(() => {
+    // 1. If user coordinates exist, calculate live distance and show nearby places!
+    if (userLat !== undefined && userLng !== undefined && !isNaN(userLat) && !isNaN(userLng)) {
+      const placesWithDist = INITIAL_FEATURED_PLACES.map(p => ({
+        ...p,
+        liveDist: calculateDistanceKm(userLat, userLng, p.latitude, p.longitude)
+      })).sort((a, b) => a.liveDist - b.liveDist);
+
+      // Spots within 150km of the user
+      const nearby = placesWithDist.filter(p => p.liveDist <= 150);
+      if (nearby.length > 0) return nearby;
+
+      // If user is farther away from current spots, return the 15 closest places
+      return placesWithDist.slice(0, 15);
+    }
+
     if (currentCity && currentCity.toLowerCase() !== 'all') {
       const matched = INITIAL_FEATURED_PLACES.filter(
-        (p) => p.city.toLowerCase() === currentCity.toLowerCase()
+        (p) => p.city.toLowerCase() === currentCity.toLowerCase() || (p.area && p.area.toLowerCase().includes(currentCity.toLowerCase()))
       );
       if (matched.length > 0) return matched;
     }
-    return INITIAL_FEATURED_PLACES.filter(
-      (p) =>
-        p.latitude >= DEFAULT_MAP_BOUNDS.minLat - 0.05 &&
-        p.latitude <= DEFAULT_MAP_BOUNDS.maxLat + 0.05 &&
-        p.longitude >= DEFAULT_MAP_BOUNDS.minLng - 0.05 &&
-        p.longitude <= DEFAULT_MAP_BOUNDS.maxLng + 0.05
-    );
-  }, [currentCity]);
+
+    return INITIAL_FEATURED_PLACES.slice(0, 15);
+  }, [userLat, userLng, currentCity]);
 
   // Dynamically compute map bounds based on places + user coordinates
   const currentBounds = React.useMemo(() => {

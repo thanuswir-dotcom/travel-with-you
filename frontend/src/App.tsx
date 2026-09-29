@@ -221,6 +221,8 @@ export default function App() {
             setActiveTab={setActiveTab}
             onViewPlaceDetails={(p) => setSelectedPlace(p)}
             currentCity={location.city}
+            userLat={location.latitude}
+            userLng={location.longitude}
           />
         )}
 

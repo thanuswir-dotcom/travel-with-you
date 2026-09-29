@@ -10,6 +10,7 @@ import {
   CheckCircle2, Send, Tag, ChevronRight, ShieldCheck, Dice5
 } from 'lucide-react';
 import { fetchWeather, sendAIChat, type WeatherData } from '../utils/api';
+import { getPlacesWithLiveDistance } from '../utils/location';
 
 interface LandingPageProps {
   location: LocationState;
@@ -34,9 +35,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   
   // AI recommendation preview state
   const [aiPrompt, setAiPrompt] = useState('Suggest a place to hang out with 4 friends under ₹500');
-  const [aiResponse, setAiResponse] = useState<string | null>(
-    'Here are 3 student favorites near you that fit under ₹500 total:\n• **VV Puram Food Street** (Crispy dosas, ₹120/head)\n• **Cubbon Park Lawn** (Guitar & chill, Free)\n• **Blossom Book House** (Novel browsing & ₹30 tea)'
-  );
+  const [aiResponse, setAiResponse] = useState<string | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
 
   // Budget Filter for Section 6
@@ -44,6 +43,33 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
   // Food Filter for Section 8
   const [foodCategory, setFoodCategory] = useState<string>('all');
+
+  // 1. Calculate live geographical distance for all places based on user's live latitude & longitude
+  const placesWithDistance = React.useMemo(() => {
+    return getPlacesWithLiveDistance(INITIAL_FEATURED_PLACES, location.latitude, location.longitude);
+  }, [location.latitude, location.longitude]);
+
+  // 2. Sort all places by true proximity to user's location
+  const placesSortedByProximity = React.useMemo(() => {
+    return [...placesWithDistance].sort((a, b) => {
+      // Prioritize places matching user's detected city or area
+      const aInCity = a.city.toLowerCase() === location.city.toLowerCase() || (a.area && a.area.toLowerCase().includes(location.city.toLowerCase()));
+      const bInCity = b.city.toLowerCase() === location.city.toLowerCase() || (b.area && b.area.toLowerCase().includes(location.city.toLowerCase()));
+      if (aInCity && !bInCity) return -1;
+      if (!aInCity && bInCity) return 1;
+
+      return (a.distanceKm ?? 9999) - (b.distanceKm ?? 9999);
+    });
+  }, [placesWithDistance, location.city]);
+
+  // 3. Dynamic AI initial greeting based on nearby spots
+  useEffect(() => {
+    const nearby = placesSortedByProximity.slice(0, 3);
+    if (nearby.length > 0) {
+      const suggestions = nearby.map(p => `• **${p.name}** (${p.area || p.city}, ${p.approxCostForOne === 0 ? 'Free' : `₹${p.approxCostForOne}/head`}${p.distanceKm !== undefined ? `, ${p.distanceKm} km away` : ''})`).join('\n');
+      setAiResponse(`Here are top student favorites near you in ${location.city} (${location.area}):\n${suggestions}`);
+    }
+  }, [location.city, location.area, placesSortedByProximity]);
 
   useEffect(() => {
     fetchWeather(location.city).then((data) => {
@@ -58,46 +84,55 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       const reply = await sendAIChat(promptText, location.city);
       setAiResponse(reply);
     } catch {
-      setAiResponse(`In ${location.city}, check out Blossom Book House on Church Street or VV Puram Food Street for great student vibes under ₹200!`);
+      const topPick = placesSortedByProximity[0];
+      setAiResponse(`In ${location.city}, check out ${topPick?.name || 'local campus cafes'} (${topPick?.area || location.area}) for great student vibes under ₹200!`);
     } finally {
       setIsAiLoading(false);
     }
   };
 
-  // Filter places based on search query and category
-  const filteredPlaces = INITIAL_FEATURED_PLACES.filter((place) => {
-    const matchesCategory = selectedCategory === 'all' || place.category === selectedCategory;
-    const q = searchQuery.trim().toLowerCase();
-    const matchesSearch = q === '' || 
-      place.name.toLowerCase().includes(q) ||
-      place.description.toLowerCase().includes(q) ||
-      place.area.toLowerCase().includes(q) ||
-      (place.city && place.city.toLowerCase().includes(q)) ||
-      (place.state && place.state.toLowerCase().includes(q)) ||
-      place.studentPerks.some((p) => p.toLowerCase().includes(q));
+  // Filter places based on search query and category (sorted by true proximity)
+  const filteredPlaces = React.useMemo(() => {
+    return placesSortedByProximity.filter((place) => {
+      const matchesCategory = selectedCategory === 'all' || place.category === selectedCategory;
+      const q = searchQuery.trim().toLowerCase();
+      const matchesSearch = q === '' || 
+        place.name.toLowerCase().includes(q) ||
+        place.description.toLowerCase().includes(q) ||
+        place.area.toLowerCase().includes(q) ||
+        (place.city && place.city.toLowerCase().includes(q)) ||
+        (place.state && place.state.toLowerCase().includes(q)) ||
+        place.studentPerks.some((p) => p.toLowerCase().includes(q));
 
-    return matchesCategory && matchesSearch;
-  });
+      return matchesCategory && matchesSearch;
+    });
+  }, [placesSortedByProximity, selectedCategory, searchQuery]);
 
-  // Section 6: Student Budget Picks (<₹100, <₹250, <₹500, Free)
-  const budgetPicks = INITIAL_FEATURED_PLACES.filter(p => {
-    if (budgetFilter === 0) return p.approxCostForOne === 0;
-    return p.approxCostForOne <= budgetFilter;
-  }).slice(0, 4);
+  // Section 6: Student Budget Picks (<₹100, <₹250, <₹500, Free) sorted by proximity
+  const budgetPicks = React.useMemo(() => {
+    return placesSortedByProximity.filter(p => {
+      if (budgetFilter === 0) return p.approxCostForOne === 0;
+      return p.approxCostForOne <= budgetFilter;
+    }).slice(0, 4);
+  }, [placesSortedByProximity, budgetFilter]);
 
-  // Section 8: Food Explorer Places
-  const foodPlaces = INITIAL_FEATURED_PLACES.filter(p => {
-    if (p.category !== 'street_food' && p.category !== 'restaurants' && p.category !== 'cafes') return false;
-    if (foodCategory === 'street') return p.category === 'street_food';
-    if (foodCategory === 'cafe') return p.category === 'cafes';
-    if (foodCategory === 'under100') return p.approxCostForOne <= 100;
-    return true;
-  }).slice(0, 4);
+  // Section 8: Food Explorer Places sorted by proximity
+  const foodPlaces = React.useMemo(() => {
+    return placesSortedByProximity.filter(p => {
+      if (p.category !== 'street_food' && p.category !== 'restaurants' && p.category !== 'cafes') return false;
+      if (foodCategory === 'street') return p.category === 'street_food';
+      if (foodCategory === 'cafe') return p.category === 'cafes';
+      if (foodCategory === 'under100') return p.approxCostForOne <= 100;
+      return true;
+    }).slice(0, 4);
+  }, [placesSortedByProximity, foodCategory]);
 
-  // Section 9: Weekend Explorer Places
-  const weekendPlaces = INITIAL_FEATURED_PLACES.filter(p => 
-    p.category === 'weekend_trips' || p.category === 'viewpoints'
-  ).slice(0, 3);
+  // Section 9: Weekend Explorer Places sorted by proximity
+  const weekendPlaces = React.useMemo(() => {
+    return placesSortedByProximity.filter(p => 
+      p.category === 'weekend_trips' || p.category === 'viewpoints'
+    ).slice(0, 3);
+  }, [placesSortedByProximity]);
 
   return (
     <div className="min-h-screen text-slate-100">

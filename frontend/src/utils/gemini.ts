@@ -1,6 +1,6 @@
 // Google Gemini AI Integration for Travel With You
-// IMPORTANT: Replace the placeholder with your actual API key
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { INITIAL_FEATURED_PLACES } from './constants';
 
 // The API key is stored here for hackathon/demo use
 // In production, move this to a backend server
@@ -164,58 +164,40 @@ Always think about student budgets (typically ₹100-₹500 per person).`;
   }
 };
 
-// ─── Rich Mock Responses (shown when no API key) ─────────────────────
+// ─── Dynamic Responses per City (used when no Gemini API key is configured) ───
 const getMockTripPlan = (req: TripPlanRequest): TripPlan => {
   const perPerson = Math.floor(req.budget / Math.max(req.friends, 1));
-  const isLowBudget = perPerson < 300;
+  const cityLower = req.city.toLowerCase();
+
+  // Find places matching the user's city, area, or state
+  let matched = INITIAL_FEATURED_PLACES.filter(p => 
+    p.city.toLowerCase().includes(cityLower) || 
+    (p.area && p.area.toLowerCase().includes(cityLower)) ||
+    (p.state && p.state.toLowerCase().includes(cityLower))
+  );
+
+  if (matched.length === 0) {
+    matched = INITIAL_FEATURED_PLACES.slice(0, 4);
+  }
+
+  const selected = matched.slice(0, 4);
+  const stops: TripStop[] = selected.map((p, idx) => ({
+    order: idx + 1,
+    name: p.name,
+    category: p.category,
+    duration: '1.5 hours',
+    estimatedCost: p.approxCostForOne === 0 ? 0 : Math.min(p.approxCostForOne, Math.floor(perPerson / 3)),
+    description: p.description,
+    tips: p.studentPerks?.[0] || 'Popular student spot with great views',
+    travelTime: idx === 0 ? 'Start here' : '15 min by auto / bike'
+  }));
 
   return {
-    title: isLowBudget ? '⚡ The Budget Blitz Day Out' : '🌟 The Perfect Student Saturday',
-    totalEstimatedCost: Math.floor(perPerson * 0.85),
+    title: `🌟 The Perfect ${req.city} Student Outing`,
+    totalEstimatedCost: stops.reduce((sum, s) => sum + s.estimatedCost, 0) || Math.floor(perPerson * 0.8),
     duration: `${req.hours} hours`,
     vibe: req.preferences.includes('street_food') ? 'Foodie' : req.preferences.includes('parks_nature') ? 'Chill' : 'Adventure',
-    stops: [
-      {
-        order: 1,
-        name: 'Cubbon Park Morning Walk',
-        category: 'parks_nature',
-        duration: '1 hour',
-        estimatedCost: 0,
-        description: 'Start your day fresh at the iconic 300-acre Cubbon Park. Catch the morning joggers, cycle paths, and heritage red buildings. Perfect for group photos.',
-        tips: 'Bring a frisbee or badminton rackets! The lawns are spacious and free to use.',
-        travelTime: '10–15 min by auto',
-      },
-      {
-        order: 2,
-        name: 'Airlines Hotel Banyan Café',
-        category: 'cafes',
-        duration: '45 min',
-        estimatedCost: 120,
-        description: 'Legendary open-air café under a 100-year-old banyan tree. Famous for ₹35 filter coffee and crispy masala dosas. A true Bengaluru institution.',
-        tips: 'Go early to avoid queues. Order the sambar vada — best in the city under ₹60!',
-        travelTime: '5 min walk from Cubbon',
-      },
-      {
-        order: 3,
-        name: 'Blossom Book House',
-        category: 'study_spots',
-        duration: '45 min',
-        estimatedCost: 80,
-        description: 'A treasure trove for students — 3-storey secondhand bookstore on Church Street with titles at 50% off. Find novels, engineering references, and manga.',
-        tips: 'Bargain politely at the counter for bulk purchases. Student ID gets extra 10% off.',
-        travelTime: '12 min by auto',
-      },
-      {
-        order: 4,
-        name: 'VV Puram Thindi Beedi',
-        category: 'street_food',
-        duration: '1 hour',
-        estimatedCost: 150,
-        description: 'The ultimate Bengaluru street food street! 20+ stalls with butter masala dosas, congress kadlekai, rabdi kulfi, and chaats. Heaven for foodies.',
-        tips: 'Visit after 5 PM when all stalls open. Split dishes between friends to try more!',
-        travelTime: '20 min by auto',
-      },
-    ],
+    stops,
     budgetBreakdown: {
       food: Math.floor(perPerson * 0.45),
       transport: Math.floor(perPerson * 0.2),
@@ -223,31 +205,40 @@ const getMockTripPlan = (req: TripPlanRequest): TripPlan => {
       buffer: Math.floor(perPerson * 0.1),
     },
     quickTips: [
-      '🚗 Use Rapido bike taxi between spots to save ₹30–₹50 per leg vs autos',
-      '💳 Carry cash — many street food stalls don\'t accept UPI',
-      '🌤️ Start before 10 AM to avoid peak heat and crowds',
-    ],
+      `🚗 Travel locally around ${req.city} by shared auto or bike to save money`,
+      '💳 Carry UPI and some cash for small student stalls',
+      '🌤️ Start early in the morning or late afternoon for the best experience'
+    ]
   };
 };
 
 const getMockChatResponse = (message: string, city: string): string => {
+  const cityLower = city.toLowerCase();
+  const cityPlaces = INITIAL_FEATURED_PLACES.filter(p =>
+    p.city.toLowerCase().includes(cityLower) ||
+    (p.area && p.area.toLowerCase().includes(cityLower)) ||
+    (p.state && p.state.toLowerCase().includes(cityLower))
+  );
+
+  const topSpot = cityPlaces[0] || INITIAL_FEATURED_PLACES[0];
+  const secondSpot = cityPlaces[1] || INITIAL_FEATURED_PLACES[1];
+
   const lower = message.toLowerCase();
-  
   if (lower.includes('budget') || lower.includes('cheap') || lower.includes('affordable')) {
-    return `For a tight budget in ${city}, head to VV Puram Thindi Beedi (under ₹150 per person) or Cubbon Park (free!). My top hack: skip restaurants and go straight to street food streets — the quality is often better and you\'ll spend 60% less! 💸`;
+    return `For a student budget in ${city}, head to ${topSpot.name} (${topSpot.approxCostForOne === 0 ? 'Free entry!' : `around ₹${topSpot.approxCostForOne} per head`}). It's located in ${topSpot.area} and verified for students! 💸`;
   }
   if (lower.includes('cafe') || lower.includes('coffee') || lower.includes('study')) {
-    return `The best student cafés in ${city} include Airlines Hotel Banyan Café (₹35 filter coffee!), Koshy\'s on St. Marks Road (iconic and affordable), and Cafe Matteo for Wi-Fi + charging. All under ₹200 for a solid work session! ☕`;
+    const cafeSpot = cityPlaces.find(p => p.category === 'cafes' || p.category === 'study_spots') || topSpot;
+    return `In ${city}, check out ${cafeSpot.name} in ${cafeSpot.area}. Great ambiance, student-friendly prices, and perfect for reading or catching up with friends! ☕`;
   }
   if (lower.includes('food') || lower.includes('eat') || lower.includes('hungry')) {
-    return `Student food spots in ${city} you CANNOT miss: VV Puram Thindi Beedi for street food (₹40–₹150), Shivaji Military Hotel for local thali (₹80), and Maiya's for comfort South Indian food under ₹120. What type of cuisine are you craving? 🍕`;
-  }
-  if (lower.includes('friend') || lower.includes('group') || lower.includes('gang')) {
-    return `For groups in ${city}, Amoeba Bowling on Church Street is perfect (student discounts Mon–Thu!), or check out Smaaash for gaming + food. For free fun, Ulsoor Lake + picnic is a classic student move. Budget ₹300–₹500 per person for a full day out! 🎳`;
+    const foodSpot = cityPlaces.find(p => p.category === 'street_food' || p.category === 'restaurants') || topSpot;
+    return `Student food in ${city} you shouldn't miss: ${foodSpot.name} (${foodSpot.approxCostForOne === 0 ? 'Budget friendly' : `under ₹${foodSpot.approxCostForOne}`}). Known for delicious local flavors! 🍕`;
   }
   if (lower.includes('weekend') || lower.includes('trip') || lower.includes('getaway')) {
-    return `Weekend trips from ${city} under ₹800: Nandi Hills sunrise trek (₹200 transport), Hogenakkal waterfalls (₹400 bus), or Shivanasamudra falls (₹500 by shared cab). These are perfect 1-day student adventures! 🏔️`;
+    const tripSpot = cityPlaces.find(p => p.category === 'weekend_trips' || p.category === 'viewpoints') || secondSpot;
+    return `Top weekend getaway from ${city}: ${tripSpot.name} in ${tripSpot.area}. Spectacular views and loved by students for 1-day road trips! 🏔️`;
   }
-  
-  return `Great question! ${city} has so many student-friendly spots. The best way to explore is by category — cafés, street food, parks, or entertainment zones. Use the "Student Mode" planner above to get a custom itinerary for your exact budget and time! What's your budget today? 🎒`;
+
+  return `In ${city}, you have awesome spots like ${topSpot.name} and ${secondSpot.name}. Use the Student Planner to map out your full itinerary based on your exact budget and free hours! 🎒`;
 };
