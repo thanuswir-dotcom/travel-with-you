@@ -12,6 +12,23 @@ app.use(cors({ origin: config.corsOrigin }));
 app.use(express.json({ limit: '10mb' }));
 app.use(requestLogger);
 
+// Welcome / Root route
+app.get('/', (req, res) => {
+  res.json({
+    app: 'Travel With You Backend API 🚀',
+    tagline: 'Discover more. Spend less. Make memories.',
+    status: 'online',
+    healthCheck: '/api/health',
+    endpoints: {
+      places: '/api/places',
+      weather: '/api/weather',
+      aiChat: '/api/ai/chat',
+      aiPlan: '/api/ai/plan'
+    },
+    frontendUrl: 'https://travel-with-you.vercel.app'
+  });
+});
+
 // Mount API router
 app.use('/api', apiRouter);
 
