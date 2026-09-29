@@ -2,9 +2,10 @@ import app from './app.js';
 import { config } from './config/index.js';
 import './services/supabaseService.js';
 
-const server = app.listen(config.port, () => {
-  console.log(`🚀 Travel With You backend server running on http://localhost:${config.port}`);
-  console.log(`📍 REST APIs available at http://localhost:${config.port}/api/`);
+const HOST = '0.0.0.0';
+const server = app.listen(config.port, HOST, () => {
+  console.log(`🚀 Travel With You backend server running on http://${HOST}:${config.port}`);
+  console.log(`📍 REST APIs available at http://${HOST}:${config.port}/api/`);
   console.log(`🌍 Environment: ${config.env}`);
 });
 
