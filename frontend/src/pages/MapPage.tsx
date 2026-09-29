@@ -12,21 +12,17 @@ interface MapPageProps {
   onViewPlaceDetails?: (place: Place) => void;
   userLat?: number;
   userLng?: number;
+  currentCity?: string;
+  currentArea?: string;
 }
 
-// Rough bounding box for Bengaluru city center area
-const MAP_BOUNDS = {
+// Default bounding box fallback
+const DEFAULT_MAP_BOUNDS = {
   minLat: 12.89,
   maxLat: 13.03,
   minLng: 77.54,
   maxLng: 77.65,
 };
-
-function latLngToPercent(lat: number, lng: number) {
-  const x = ((lng - MAP_BOUNDS.minLng) / (MAP_BOUNDS.maxLng - MAP_BOUNDS.minLng)) * 100;
-  const y = ((MAP_BOUNDS.maxLat - lat) / (MAP_BOUNDS.maxLat - MAP_BOUNDS.minLat)) * 100;
-  return { x: Math.min(Math.max(x, 2), 98), y: Math.min(Math.max(y, 2), 98) };
-}
 
 const CATEGORY_COLORS: Record<string, string> = {
   cafes: '#f59e0b',
@@ -64,19 +60,59 @@ export const MapPage: React.FC<MapPageProps> = ({
   onViewPlaceDetails,
   userLat,
   userLng,
+  currentCity = 'Bengaluru',
+  currentArea,
 }) => {
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [zoom, setZoom] = useState(1);
 
-  // Filter to only in-city places (within map bounds + weekend trips excluded for main view)
-  const cityPlaces = INITIAL_FEATURED_PLACES.filter(
-    (p) =>
-      p.latitude >= MAP_BOUNDS.minLat - 0.05 &&
-      p.latitude <= MAP_BOUNDS.maxLat + 0.05 &&
-      p.longitude >= MAP_BOUNDS.minLng - 0.05 &&
-      p.longitude <= MAP_BOUNDS.maxLng + 0.05
+  // Filter to places for current city if available, otherwise fallback to default places
+  const cityPlaces = React.useMemo(() => {
+    if (currentCity && currentCity.toLowerCase() !== 'all') {
+      const matched = INITIAL_FEATURED_PLACES.filter(
+        (p) => p.city.toLowerCase() === currentCity.toLowerCase()
+      );
+      if (matched.length > 0) return matched;
+    }
+    return INITIAL_FEATURED_PLACES.filter(
+      (p) =>
+        p.latitude >= DEFAULT_MAP_BOUNDS.minLat - 0.05 &&
+        p.latitude <= DEFAULT_MAP_BOUNDS.maxLat + 0.05 &&
+        p.longitude >= DEFAULT_MAP_BOUNDS.minLng - 0.05 &&
+        p.longitude <= DEFAULT_MAP_BOUNDS.maxLng + 0.05
+    );
+  }, [currentCity]);
+
+  // Dynamically compute map bounds based on places + user coordinates
+  const currentBounds = React.useMemo(() => {
+    const points: { lat: number; lng: number }[] = cityPlaces.map((p) => ({
+      lat: p.latitude,
+      lng: p.longitude,
+    }));
+    if (userLat && userLng) {
+      points.push({ lat: userLat, lng: userLng });
+    }
+    if (points.length === 0) return DEFAULT_MAP_BOUNDS;
+    const lats = points.map((p) => p.lat);
+    const lngs = points.map((p) => p.lng);
+    const minLat = Math.min(...lats) - 0.03;
+    const maxLat = Math.max(...lats) + 0.03;
+    const minLng = Math.min(...lngs) - 0.03;
+    const maxLng = Math.max(...lngs) + 0.03;
+    return { minLat, maxLat, minLng, maxLng };
+  }, [cityPlaces, userLat, userLng]);
+
+  const latLngToPercent = useCallback(
+    (lat: number, lng: number) => {
+      const spanLng = currentBounds.maxLng - currentBounds.minLng || 0.08;
+      const spanLat = currentBounds.maxLat - currentBounds.minLat || 0.08;
+      const x = ((lng - currentBounds.minLng) / spanLng) * 100;
+      const y = ((currentBounds.maxLat - lat) / spanLat) * 100;
+      return { x: Math.min(Math.max(x, 5), 95), y: Math.min(Math.max(y, 5), 95) };
+    },
+    [currentBounds]
   );
 
   const visiblePlaces = activeCategory === 'all'
@@ -94,13 +130,14 @@ export const MapPage: React.FC<MapPageProps> = ({
       <div className="mb-6">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold mb-3">
           <MapPin className="w-3.5 h-3.5" />
-          <span>Interactive Student Map — Bengaluru</span>
+          <span>Interactive Student Map — {currentCity}</span>
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
           Live Hotspot Map
         </h1>
         <p className="text-slate-400 text-sm mt-1">
-          All student-rated places pinned on a live Bengaluru map. Tap any pin for details.
+          {currentArea ? `Exploring near ${currentArea}, ${currentCity}. ` : ''}
+          {cityPlaces.length} student-rated places pinned on the live map. Tap any pin for details.
         </p>
       </div>
 

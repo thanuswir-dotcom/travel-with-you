@@ -220,6 +220,8 @@ export default function App() {
             onViewPlaceDetails={(p) => setSelectedPlace(p)}
             userLat={location.latitude}
             userLng={location.longitude}
+            currentCity={location.city}
+            currentArea={location.area}
           />
         )}
 

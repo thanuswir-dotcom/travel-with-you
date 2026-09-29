@@ -2,6 +2,7 @@ import type { LocationState } from '../types';
 
 const KNOWN_HUBS = [
   { city: 'Bengaluru', area: 'Church Street & Central', lat: 12.9716, lng: 77.5946 },
+  { city: 'Anantapur', area: 'Gorantla & JNTU Campus', lat: 13.985, lng: 77.772 },
   { city: 'Delhi', area: 'North Campus & Hudson Lane', lat: 28.6942, lng: 77.2065 },
   { city: 'Mumbai', area: 'Bandra & Marine Drive', lat: 18.9438, lng: 72.8234 },
   { city: 'Pune', area: 'FC Road & Shivajinagar', lat: 18.5204, lng: 73.8567 },
@@ -55,11 +56,50 @@ export async function detectLiveLocation(): Promise<LocationState> {
             const data = await res.json();
             const address = data.address || {};
             
-            // Extract City
-            detectedCity = address.city || address.town || address.state_district || address.county || address.state || 'Bengaluru';
-            
-            // Extract Area / Neighborhood
-            detectedArea = address.suburb || address.neighbourhood || address.residential || address.road || address.county || address.quarter || `${detectedCity} Central`;
+            // 1. Identify specific local area / town / village (e.g. Gorantla, Indiranagar, North Campus)
+            const localArea = 
+              address.village || 
+              address.town || 
+              address.suburb || 
+              address.neighbourhood || 
+              address.residential || 
+              address.quarter ||
+              address.city_district;
+
+            // 2. Filter out raw technical highway/road codes like 'mdr0173', 'nh44', 'sh1'
+            const validRoad = address.road && !/^(mdr|nh|sh|ah|odr)\s*\d+/i.test(address.road.trim())
+              ? address.road
+              : null;
+
+            // 3. Identify primary City or District (e.g. Anantapur, Bengaluru, Delhi)
+            let primaryCity = 
+              (address.county && address.county.toLowerCase().includes('anantapur') ? 'Anantapur' : null) ||
+              address.city || 
+              address.county || 
+              address.town || 
+              address.state_district || 
+              address.state || 
+              'Bengaluru';
+
+            // Clean administrative suffixes
+            primaryCity = primaryCity.replace(/\s*(District|Urban|Rural|Central City Corporation)$/i, '').trim();
+
+            let displayArea = localArea || validRoad || `${primaryCity} Central`;
+            displayArea = displayArea.replace(/\s*(Urban|Rural)$/i, '').trim();
+
+            // Disambiguate if area and city match
+            if (displayArea.toLowerCase() === primaryCity.toLowerCase()) {
+              if (address.state_district && address.state_district.toLowerCase() !== primaryCity.toLowerCase()) {
+                primaryCity = address.state_district.replace(/\s*District$/i, '').trim();
+              } else if (address.county && address.county.toLowerCase() !== primaryCity.toLowerCase()) {
+                primaryCity = address.county.replace(/\s*District$/i, '').trim();
+              } else {
+                displayArea = `${primaryCity} Central`;
+              }
+            }
+
+            detectedCity = primaryCity;
+            detectedArea = displayArea;
           }
         } catch (err) {
           console.warn('Reverse geocoding network timeout/error, calculating closest student hub:', err);

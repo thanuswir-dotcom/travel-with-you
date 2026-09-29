@@ -30,6 +30,15 @@ const STUDENT_HUBS = [
     emoji: '☕'
   },
   {
+    city: 'Anantapur',
+    area: 'Gorantla & JNTU Hub',
+    state: 'Andhra Pradesh',
+    colleges: 'JNTUA, Sri Krishnadevaraya University, Lepakshi Heritage',
+    lat: 13.985,
+    lng: 77.772,
+    emoji: '🏛️'
+  },
+  {
     city: 'Delhi',
     area: 'North Campus & Hudson Lane',
     state: 'Delhi NCR',
