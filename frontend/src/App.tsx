@@ -130,6 +130,20 @@ export default function App() {
     }
   };
 
+  // Auto-detect location on load if permission is granted or on initial visit
+  useEffect(() => {
+    const hasStoredLocation = localStorage.getItem('twy_location');
+    if (!hasStoredLocation && typeof navigator !== 'undefined' && navigator.geolocation) {
+      handleDetectLocation();
+    } else if (typeof navigator !== 'undefined' && navigator.permissions && navigator.permissions.query) {
+      navigator.permissions.query({ name: 'geolocation' }).then((status) => {
+        if (status.state === 'granted') {
+          handleDetectLocation();
+        }
+      }).catch(() => {});
+    }
+  }, []);
+
   // Auth Handlers (save session to localStorage)
   const handleAuthSuccess = (u: UserProfile) => {
     setUser(u);
