@@ -767,11 +767,11 @@ const BASE_PLACES: Place[] = [
   },
 ];
 
-// Deduplicate and combine base places with Pan-India places
-const basePlaceIds = new Set(BASE_PLACES.map((p) => p.id));
+// Deduplicate and combine Pan-India places with base places
+const panPlaceIds = new Set(PAN_INDIA_PLACES.map((p) => p.id));
 export const INITIAL_FEATURED_PLACES: Place[] = [
-  ...BASE_PLACES,
-  ...PAN_INDIA_PLACES.filter((p) => !basePlaceIds.has(p.id)),
+  ...PAN_INDIA_PLACES,
+  ...BASE_PLACES.filter((p) => !panPlaceIds.has(p.id)),
 ];
 
 export const POPULAR_SEARCH_QUERIES = [

@@ -47,6 +47,35 @@ export function getPlacesWithLiveDistance<T extends { latitude: number; longitud
   });
 }
 
+export async function detectIPLocation(): Promise<LocationState | null> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    const res = await fetch('https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=en', {
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const city = data.city || data.locality || data.principalSubdivision || 'Bengaluru';
+    const area = data.locality || data.city || 'Nearby Area';
+    const lat = data.latitude;
+    const lng = data.longitude;
+    if (lat && lng) {
+      return {
+        city,
+        area,
+        latitude: lat,
+        longitude: lng,
+        isDetected: false
+      };
+    }
+  } catch (e) {
+    console.warn('IP location fetch failed:', e);
+  }
+  return null;
+}
+
 export async function detectLiveLocation(): Promise<LocationState> {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
@@ -57,76 +86,99 @@ export async function detectLiveLocation(): Promise<LocationState> {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
-        let detectedCity = 'Bengaluru';
-        let detectedArea = 'Current Location';
+        let detectedCity = '';
+        let detectedArea = '';
 
+        // Step 1: Try BigDataCloud Client Reverse Geocode (free, high accuracy, CORS-friendly, zero API key)
         try {
-          // Reverse geocode via OpenStreetMap Nominatim with 4-second timeout
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 4000);
 
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
-            { 
-              headers: { 'Accept-Language': 'en' },
-              signal: controller.signal
-            }
+            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`,
+            { signal: controller.signal }
           );
           clearTimeout(timeoutId);
 
           if (res.ok) {
             const data = await res.json();
-            const address = data.address || {};
-            
-            // 1. Identify specific local area / town / village (e.g. Gorantla, Indiranagar, North Campus)
-            const localArea = 
-              address.village || 
-              address.town || 
-              address.suburb || 
-              address.neighbourhood || 
-              address.residential || 
-              address.quarter ||
-              address.city_district;
+            const townOrCity = data.city || data.locality;
+            const state = data.principalSubdivision;
 
-            // 2. Filter out raw technical highway/road codes like 'mdr0173', 'nh44', 'sh1'
-            const validRoad = address.road && !/^(mdr|nh|sh|ah|odr)\s*\d+/i.test(address.road.trim())
-              ? address.road
-              : null;
-
-            // 3. Identify primary City or District (e.g. Anantapur, Bengaluru, Delhi)
-            let primaryCity = 
-              (address.county && address.county.toLowerCase().includes('anantapur') ? 'Anantapur' : null) ||
-              address.city || 
-              address.county || 
-              address.town || 
-              address.state_district || 
-              address.state || 
-              'Bengaluru';
-
-            // Clean administrative suffixes
-            primaryCity = primaryCity.replace(/\s*(District|Urban|Rural|Central City Corporation)$/i, '').trim();
-
-            let displayArea = localArea || validRoad || `${primaryCity} Central`;
-            displayArea = displayArea.replace(/\s*(Urban|Rural)$/i, '').trim();
-
-            // Disambiguate if area and city match
-            if (displayArea.toLowerCase() === primaryCity.toLowerCase()) {
-              if (address.state_district && address.state_district.toLowerCase() !== primaryCity.toLowerCase()) {
-                primaryCity = address.state_district.replace(/\s*District$/i, '').trim();
-              } else if (address.county && address.county.toLowerCase() !== primaryCity.toLowerCase()) {
-                primaryCity = address.county.replace(/\s*District$/i, '').trim();
-              } else {
-                displayArea = `${primaryCity} Central`;
+            // Extract administrative local district or mandal if available
+            let mandalOrSub = '';
+            if (data.localityInfo && Array.isArray(data.localityInfo.administrative)) {
+              for (const admin of data.localityInfo.administrative) {
+                if (admin.order >= 10 && admin.name && !admin.name.toLowerCase().includes('district') && !admin.name.toLowerCase().includes('mandal')) {
+                  mandalOrSub = admin.name;
+                  break;
+                }
               }
             }
 
-            detectedCity = primaryCity;
-            detectedArea = displayArea;
+            if (townOrCity) {
+              detectedCity = townOrCity;
+              detectedArea = mandalOrSub || data.locality || townOrCity;
+            } else if (state) {
+              detectedCity = state;
+              detectedArea = data.locality || 'Nearby Region';
+            }
           }
-        } catch (err) {
-          console.warn('Reverse geocoding network timeout/error, calculating closest student hub:', err);
-          
-          // Fallback: match to nearest known hub
+        } catch (bdcErr) {
+          console.warn('BigDataCloud geocode failed, trying Nominatim fallback:', bdcErr);
+        }
+
+        // Step 2: Fallback to OpenStreetMap Nominatim if BigDataCloud did not resolve city
+        if (!detectedCity) {
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+            const res = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+              {
+                headers: { 'Accept-Language': 'en' },
+                signal: controller.signal
+              }
+            );
+            clearTimeout(timeoutId);
+
+            if (res.ok) {
+              const data = await res.json();
+              const address = data.address || {};
+
+              const localArea =
+                address.village ||
+                address.town ||
+                address.suburb ||
+                address.neighbourhood ||
+                address.residential ||
+                address.city_district;
+
+              let primaryCity =
+                address.village ||
+                address.town ||
+                address.city ||
+                (address.county && address.county.toLowerCase().includes('anantapur') ? 'Anantapur' : null) ||
+                address.county ||
+                address.state_district ||
+                '';
+
+              primaryCity = primaryCity.replace(/\s*(District|Urban|Rural|Central City Corporation)$/i, '').trim();
+              const displayArea = localArea || `${primaryCity} Central`;
+
+              if (primaryCity) {
+                detectedCity = primaryCity;
+                detectedArea = displayArea;
+              }
+            }
+          } catch (osmErr) {
+            console.warn('Nominatim geocode failed:', osmErr);
+          }
+        }
+
+        // Step 3: Math-based nearest hub fallback
+        if (!detectedCity) {
           let closestHub = KNOWN_HUBS[0];
           let minDistance = Infinity;
 
@@ -138,13 +190,8 @@ export async function detectLiveLocation(): Promise<LocationState> {
             }
           }
 
-          if (minDistance <= 70) {
-            detectedCity = closestHub.city;
-            detectedArea = closestHub.area;
-          } else {
-            detectedCity = closestHub.city;
-            detectedArea = `Within ${Math.round(minDistance)}km of ${closestHub.city}`;
-          }
+          detectedCity = closestHub.city;
+          detectedArea = minDistance <= 30 ? closestHub.area : `Near ${closestHub.city} (${Math.round(minDistance)}km)`;
         }
 
         const locationResult: LocationState = {
@@ -175,7 +222,7 @@ export async function detectLiveLocation(): Promise<LocationState> {
       {
         enableHighAccuracy: true,
         timeout: 10000,
-        maximumAge: 60000
+        maximumAge: 30000
       }
     );
   });

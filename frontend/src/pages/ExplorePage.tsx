@@ -135,7 +135,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
   const resetFilters = () => {
     setFilters(defaultFilters);
     setQuery('');
-    setSort('rating');
+    setSort('distance');
   };
 
   return (
@@ -152,7 +152,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
             Explore Near You
           </h1>
           <p className="text-slate-400 text-sm mt-1">
-            Filter by distance, budget, mood, and student-friendly amenities in {currentCity}.
+            Filter by distance, budget, mood, and student-friendly amenities around {currentCity}.
           </p>
         </div>
 
@@ -239,11 +239,11 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
                   onChange={(e) => setSort(e.target.value as SortOption)}
                   className="px-3 py-3 rounded-2xl bg-slate-900 border border-slate-800 text-slate-300 text-xs sm:text-sm font-medium outline-none cursor-pointer"
                 >
+                  <option value="distance">Nearest Distance 📍</option>
                   <option value="rating">Top Rated ⭐</option>
                   <option value="cost_asc">Cost: Low to High 💰</option>
                   <option value="cost_desc">Cost: High to Low</option>
                   <option value="reviews">Most Reviewed 💬</option>
-                  <option value="distance">Nearest Distance 📍</option>
                 </select>
               </div>
             </div>

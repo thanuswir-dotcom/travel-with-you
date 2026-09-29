@@ -49,18 +49,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     return getPlacesWithLiveDistance(INITIAL_FEATURED_PLACES, location.latitude, location.longitude);
   }, [location.latitude, location.longitude]);
 
-  // 2. Sort all places by true proximity to user's location
+  // 2. Sort all places by true physical proximity to user's live geo coordinates
   const placesSortedByProximity = React.useMemo(() => {
     return [...placesWithDistance].sort((a, b) => {
-      // Prioritize places matching user's detected city or area
-      const aInCity = a.city.toLowerCase() === location.city.toLowerCase() || (a.area && a.area.toLowerCase().includes(location.city.toLowerCase()));
-      const bInCity = b.city.toLowerCase() === location.city.toLowerCase() || (b.area && b.area.toLowerCase().includes(location.city.toLowerCase()));
-      if (aInCity && !bInCity) return -1;
-      if (!aInCity && bInCity) return 1;
-
       return (a.distanceKm ?? 9999) - (b.distanceKm ?? 9999);
     });
-  }, [placesWithDistance, location.city]);
+  }, [placesWithDistance]);
 
   // 3. Dynamic AI initial greeting based on nearby spots
   useEffect(() => {

@@ -24,7 +24,7 @@ import { ProfilePage } from './pages/ProfilePage';
 import { User } from 'lucide-react';
 import { INITIAL_FEATURED_PLACES } from './utils/constants';
 import { toggleSavePlaceBackend } from './utils/api';
-import { detectLiveLocation } from './utils/location';
+import { detectLiveLocation, detectIPLocation } from './utils/location';
 import type { ActiveTab, AuthMode, LocationState, Place, UserProfile } from './types';
 
 export default function App() {
@@ -52,26 +52,24 @@ export default function App() {
     }
   });
 
-  // Current Location State (Defaults to stored location or Bengaluru Student District)
+  // Current Location State (Restores live GPS detected location or initializes with clean detector)
   const [location, setLocation] = useState<LocationState>(() => {
     try {
       const stored = localStorage.getItem('twy_location');
-      return stored ? JSON.parse(stored) : {
-        city: 'Bengaluru',
-        area: 'Church Street & Central',
-        latitude: 12.9749,
-        longitude: 77.6082,
-        isDetected: false,
-      };
-    } catch {
-      return {
-        city: 'Bengaluru',
-        area: 'Church Street & Central',
-        latitude: 12.9749,
-        longitude: 77.6082,
-        isDetected: false,
-      };
-    }
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && parsed.isDetected && parsed.latitude && parsed.longitude) {
+          return parsed;
+        }
+      }
+    } catch {}
+    return {
+      city: 'Locating...',
+      area: 'Detecting Location...',
+      latitude: undefined as any,
+      longitude: undefined as any,
+      isDetected: false,
+    };
   });
 
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
@@ -131,17 +129,29 @@ export default function App() {
     }
   };
 
-  // Auto-detect location on load if permission is granted or on initial visit
+  // Auto-detect location on load: IP fast-fallback followed immediately by GPS request
   useEffect(() => {
-    const hasStoredLocation = localStorage.getItem('twy_location');
-    if (!hasStoredLocation && typeof navigator !== 'undefined' && navigator.geolocation) {
-      handleDetectLocation();
-    } else if (typeof navigator !== 'undefined' && navigator.permissions && navigator.permissions.query) {
-      navigator.permissions.query({ name: 'geolocation' }).then((status) => {
-        if (status.state === 'granted') {
-          handleDetectLocation();
+    const stored = localStorage.getItem('twy_location');
+    let hasLiveDetected = false;
+    try {
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed.isDetected && parsed.latitude && parsed.longitude) {
+          hasLiveDetected = true;
         }
-      }).catch(() => {});
+      }
+    } catch {}
+
+    if (!hasLiveDetected) {
+      detectIPLocation().then((ipLoc) => {
+        if (ipLoc) {
+          setLocation((curr) => (curr.isDetected ? curr : ipLoc));
+        }
+      });
+    }
+
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      handleDetectLocation();
     }
   }, []);
 
