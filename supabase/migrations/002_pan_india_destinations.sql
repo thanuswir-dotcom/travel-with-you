@@ -931,6 +931,186 @@ INSERT INTO public.destinations (
     true, true,
     true,
     ARRAY['Free Entry with Visitor Pass', 'Peaceful Cycling Trails', 'Organic Farm Cafes']::TEXT[]
+  ),
+  (
+    'chn-th-sathyam-1', 'Sathyam Cinemas (SPI Cinemas / PVR)', 'theatres', 'The undisputed holy grail of cinema for Chennai college students. Famous for its world-renowned seasoning butter popcorn, Dolby Atmos sound, crystal clear projection, and electric movie premiere atmosphere.',
+    '8 Thiruvika Road, Royapettah', 'Royapettah', 'Chennai', 'Tamil Nadu',
+    13.0583, 80.2618, 1, 190, 4.9,
+    54000, '08:30', '23:59',
+    'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=800&q=80', true, true,
+    false, false,
+    true,
+    ARRAY['World-Famous Butter Popcorn with Seasonings', 'Student Matinee Shows Under ₹150', 'Dolby Atmos Sound']::TEXT[]
+  ),
+  (
+    'chn-th-rohini-1', 'Rohini Silver Screens (Fans Fort)', 'theatres', 'Known as the "Fans Fort" of Kollywood! The epicenter of 4 AM First Day First Show (FDFS) celebrations, massive cutout banners, milk abhishekam, and roaring student crowd celebrations in Koyambedu.',
+    'Poonamallee High Road, Koyambedu', 'Koyambedu', 'Chennai', 'Tamil Nadu',
+    13.0722, 80.1942, 1, 160, 4.8,
+    38000, '07:00', '23:59',
+    'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=800&q=80', false, false,
+    false, false,
+    true,
+    ARRAY['Legendary 4 AM FDFS Celebrations', 'RGB Laser Screens', 'Pocket-Friendly Snacks & Popcorn']::TEXT[]
+  ),
+  (
+    'chn-th-vettri-1', 'Vettri Theatres RGB 4K Laser, Chromepet', 'theatres', 'A legendary suburban cinema transformed into a cutting-edge RGB 4K laser multiplex. The top movie hangout for engineering students from MIT, SRM, and B.S. Abdur Rahman Crescent universities.',
+    'Grand Southern Trunk Road, Chromepet', 'Chromepet', 'Chennai', 'Tamil Nadu',
+    12.9516, 80.1415, 1, 140, 4.8,
+    32000, '09:00', '23:59',
+    'https://images.unsplash.com/photo-1518173946687-a4c8a383392e?auto=format&fit=crop&w=800&q=80', false, false,
+    false, false,
+    true,
+    ARRAY['RGB 4K Laser Projection', 'Earth-Shaking Subwoofer Sound System', 'Budget Tickets under ₹150']::TEXT[]
+  ),
+  (
+    'chn-th-udhayam-1', 'Udhayam Theatres Complex, Ashok Nagar', 'theatres', 'A 40-year-old historic landmark complex with 4 iconic screens (Udhayam, Mini Udhayam, Suriyan, Chandiran). Unbeatable value for college students with tickets starting at just ₹120.',
+    '1 100 Feet Road, Ashok Nagar', 'Ashok Nagar', 'Chennai', 'Tamil Nadu',
+    13.0337, 80.2114, 0, 120, 4.6,
+    29000, '09:30', '23:30',
+    'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=800&q=80', false, false,
+    false, false,
+    true,
+    ARRAY['Tickets Starting at ₹120', 'Adjacent to Ashok Nagar Metro Station', 'Classic Vintage Chennai Vibe']::TEXT[]
+  ),
+  (
+    'chn-th-devi-1', 'Devi Cineplex (Devi Paradise 70mm), Mount Road', 'theatres', 'Iconic curved-screen 70mm palace theater situated right on Anna Salai. Giant 1,000-seat auditorium, thumping audio, and an all-time favorite single-screen pilgrimage for student groups.',
+    '48 Anna Salai, Border Thottam', 'Anna Salai / Mount Road', 'Chennai', 'Tamil Nadu',
+    13.0645, 80.2678, 1, 150, 4.7,
+    27000, '10:00', '23:30',
+    'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=800&q=80', false, false,
+    false, false,
+    true,
+    ARRAY['Massive 70mm Giant Curved Screen', 'Classic Mount Road City Center Landmark', 'Budget Samosas & Tea']::TEXT[]
+  ),
+  (
+    'chn-th-kasi-1', 'Kasi Theatre, Jafferkhanpet', 'theatres', 'One of the most high-voltage single-screen movie venues in South India. Known for electrifying whistle culture, student cheer groups, giant screen clarity, and budget ticket pricing.',
+    'Pillaiyar Koil Street, Jafferkhanpet', 'Jafferkhanpet / Ashok Nagar', 'Chennai', 'Tamil Nadu',
+    13.0232, 80.2033, 0, 120, 4.6,
+    21000, '10:00', '23:30',
+    'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=800&q=80', false, false,
+    false, false,
+    true,
+    ARRAY['High Energy Crowd Atmosphere', 'Cheapest Snack Menu in City', 'Student Fan Celebrations']::TEXT[]
+  ),
+  (
+    'chn-th-palazzo-1', 'PVR Palazzo IMAX, Nexus Vijaya Mall', 'theatres', 'An Italian Renaissance-inspired palace multiplex complete with neoclassical marble statues, frescoes, and a massive IMAX auditorium. Direct connectivity via Vadapalani Metro station.',
+    'Nexus Vijaya Mall, Arcot Road, Vadapalani', 'Vadapalani', 'Chennai', 'Tamil Nadu',
+    13.0504, 80.2097, 2, 230, 4.8,
+    31000, '09:00', '23:59',
+    'https://images.unsplash.com/photo-1518173946687-a4c8a383392e?auto=format&fit=crop&w=800&q=80', true, true,
+    false, false,
+    true,
+    ARRAY['Direct Vadapalani Metro Skywalk', 'IMAX Laser Experience', 'Italian Palace Themed Interiors']::TEXT[]
+  ),
+  (
+    'chn-th-mayajaal-1', 'Mayajaal Multiplex & Resort, ECR', 'theatres', 'India''s largest multiplex complex with 16 screens, bowling alleys, beach video arcade, and swimming pool. The quintessential weekend coastal road drive destination for college gangs.',
+    'East Coast Road, Kanathur', 'ECR Kanathur', 'Chennai', 'Tamil Nadu',
+    12.8580, 80.2458, 1, 180, 4.7,
+    34000, '09:00', '23:59',
+    'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=800&q=80', true, false,
+    false, true,
+    true,
+    ARRAY['16 Screens - Every Movie Show Available', 'Bowling Alley & Arcade Gaming', 'Coastal ECR Bike Ride Route']::TEXT[]
+  ),
+  (
+    'chn-th-music-academy-1', 'The Music Academy & TTK Auditorium Stage', 'theatres', 'The landmark cultural stage of South India. Hosts world-class classical Carnatic concerts, Bharatanatyam dance dramas, national theatre festivals, and contemporary college English plays.',
+    '168 TTK Road, Royapettah', 'Royapettah / Alwarpet', 'Chennai', 'Tamil Nadu',
+    13.0445, 80.2580, 1, 100, 4.9,
+    18500, '09:00', '21:30',
+    'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?auto=format&fit=crop&w=800&q=80', false, false,
+    true, false,
+    true,
+    ARRAY['Student Passes for Cultural Theatre & Plays', 'World-Class Acoustics', 'Annual December Madras Music Festival']::TEXT[]
+  ),
+  (
+    'chn-th-sir-mutha-1', 'Sir Mutha Venkatasubba Rao Concert Hall, Chetpet', 'theatres', 'A premier air-conditioned acoustic theatre with 1,200 plush seats. Stages Broadway-style musicals, English stage plays, live stand-up comedy specials, and college rock choir fests.',
+    '7 Shenstone Park, Chetpet', 'Chetpet', 'Chennai', 'Tamil Nadu',
+    13.0718, 80.2396, 2, 250, 4.8,
+    14200, '10:00', '22:00',
+    'https://images.unsplash.com/photo-1469488865564-c2de10f69f96?auto=format&fit=crop&w=800&q=80', true, false,
+    true, false,
+    true,
+    ARRAY['Top Standup Comedy Specials', 'Student Concessions for Theatre Festivals', 'Central Chetpet Location']::TEXT[]
+  ),
+  (
+    'blr-th-urvashi-1', 'Urvashi Digital 4K RGB Laser Cinema, Lalbagh', 'theatres', 'Bengaluru''s most iconic single-screen movie cathedral. Famous for having South India''s most thunderous curved screen, Dolby Atmos 64-channel sound, and loyal student crowd.',
+    '40 Siddaiah Road, Sudhama Nagar', 'Lalbagh Road', 'Bengaluru', 'Karnataka',
+    12.9568, 77.5898, 1, 170, 4.8,
+    42000, '09:00', '23:59',
+    'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=800&q=80', false, false,
+    false, false,
+    true,
+    ARRAY['Barco 4K RGB Laser Projection', 'Giant Curved Screen', 'Near Lalbagh Metro']::TEXT[]
+  ),
+  (
+    'blr-th-ranga-1', 'Ranga Shankara Theatre & Cafe, JP Nagar', 'theatres', 'Bengaluru''s beloved temple of live theatre founded by Arundhati Nag. Stages a new live play almost every single evening! Famous for ₹100 student tickets, and hot sabudana vadas & ginger tea at the courtyard cafe.',
+    '36/2 8th Cross Road, JP Nagar 2nd Phase', 'JP Nagar', 'Bengaluru', 'Karnataka',
+    12.9128, 77.5855, 0, 120, 4.9,
+    22000, '10:00', '22:00',
+    'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?auto=format&fit=crop&w=800&q=80', true, false,
+    true, false,
+    true,
+    ARRAY['Live Plays Starting at ₹100', 'Iconic Courtyard Chai & Sabudana Vada', 'Vibrant Artist & Student Crowd']::TEXT[]
+  ),
+  (
+    'hyd-th-prasads-1', 'Prasad''s Multiplex & PCX Giant Screen, Necklace Road', 'theatres', 'Hyderabad''s premier movie entertainment destination on the banks of Hussain Sagar Lake. Featuring the massive Prasad''s Big Screen (PCX), 4K projection, gaming zone, and lakefront evening breeze.',
+    'NTR Gardens, Necklace Road', 'Necklace Road', 'Hyderabad', 'Telangana',
+    17.4116, 78.4682, 1, 200, 4.8,
+    65000, '08:30', '23:59',
+    'https://images.unsplash.com/photo-1518173946687-a4c8a383392e?auto=format&fit=crop&w=800&q=80', true, true,
+    false, false,
+    true,
+    ARRAY['India''s Largest PCX Giant Screen', 'Gaming & Laser Tag Zone', 'Lakefront Street Food']::TEXT[]
+  ),
+  (
+    'hyd-th-sudarshan-1', 'Sudarshan 35mm & RTC X Roads Movie Hub', 'theatres', 'The Mecca of Tollywood mass cinema! RTC X Roads is globally famous for the most energetic fan celebrations, paper confetti storms, cutouts, and ₹130 tickets for college squads.',
+    'Chikkadpally, RTC Cross Roads', 'RTC X Roads', 'Hyderabad', 'Telangana',
+    17.4042, 78.4975, 0, 130, 4.7,
+    38000, '09:00', '23:59',
+    'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=800&q=80', false, false,
+    false, false,
+    true,
+    ARRAY['World-Famous Mass Fan Atmosphere', 'Legendary Bawarchi Biryani Right Opposite', 'Unmatched Bass Sound']::TEXT[]
+  ),
+  (
+    'mum-th-prithvi-1', 'Prithvi Theatre & Irish Coffee Cafe, Juhu', 'theatres', 'The historic soul of Indian experimental theatre founded by Shashi Kapoor and Jennifer Kendal. Intimate thrust stage hosting legendary actors, poets, and writers. Don''t miss the famous Irish coffee & cutting chai!',
+    '20 Janki Kutir, Juhu Church Road', 'Juhu', 'Mumbai', 'Maharashtra',
+    19.1062, 72.8258, 1, 150, 4.9,
+    35000, '10:00', '23:00',
+    'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?auto=format&fit=crop&w=800&q=80', true, false,
+    true, true,
+    true,
+    ARRAY['World-Famous Irish Coffee & Sulemani Chai', 'Daily Live Theatre Plays from ₹150', 'Juhu Beach 200m away']::TEXT[]
+  ),
+  (
+    'mum-th-maratha-1', 'Maratha Mandir & DDLJ Matinee, Mumbai Central', 'theatres', 'A Guinness Record holder for screening Dilwale Dulhania Le Jayenge (DDLJ) every single day for over 28 continuous years! Beautiful Art Deco 1,000-seat auditorium with morning tickets at just ₹30–₹50.',
+    'Maratha Mandir Marg, Mumbai Central', 'Mumbai Central', 'Mumbai', 'Maharashtra',
+    18.9696, 72.8193, 0, 50, 4.8,
+    31000, '10:30', '23:00',
+    'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=800&q=80', false, false,
+    false, false,
+    true,
+    ARRAY['11:30 AM DDLJ Matinee for ₹30', 'Historic Bollywood Heritage', 'Opposite Mumbai Central Station']::TEXT[]
+  ),
+  (
+    'del-th-kamani-1', 'Kamani Auditorium & Mandi House Theatre Circuit', 'theatres', 'The cultural beating heart of theatre in the capital. Stages classical plays, contemporary Hindi dramas by National School of Drama (NSD) artists, and college theatre fest finals.',
+    '1 Copernicus Marg, Mandi House', 'Mandi House', 'Delhi', 'Delhi',
+    28.6234, 77.2346, 1, 120, 4.8,
+    22000, '09:00', '21:30',
+    'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?auto=format&fit=crop&w=800&q=80', false, false,
+    true, false,
+    true,
+    ARRAY['Special Student Concessions with College ID', 'Mandi House Chai & Bun Makkhan', 'Top NSD Productions']::TEXT[]
+  ),
+  (
+    'del-th-delite-1', 'Delite Cinema & Diamond 4K, Asaf Ali Road', 'theatres', 'Historic 1954 heritage art deco cinema near Delhi Gate. Features gold-leaf ceilings, royal brass chandeliers, and the legendary ₹40 samosas and kulfi.',
+    'Asaf Ali Road, Delhi Gate', 'Old Delhi / Delhi Gate', 'Delhi', 'Delhi',
+    28.6415, 77.2405, 1, 150, 4.7,
+    28000, '10:00', '23:30',
+    'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=800&q=80', false, false,
+    false, false,
+    true,
+    ARRAY['Palatial Vintage Art Deco Interiors', 'Famous Delite Samosa & Rabri Jalebi', 'Student Group Discounts']::TEXT[]
   )
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,

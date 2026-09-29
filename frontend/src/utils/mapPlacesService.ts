@@ -67,6 +67,11 @@ const CATEGORY_IMAGES: Record<string, string[]> = {
     'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=800&q=80',
     'https://images.unsplash.com/photo-1473448912268-2022ce9509d8?auto=format&fit=crop&w=800&q=80',
   ],
+  theatres: [
+    'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?auto=format&fit=crop&w=800&q=80',
+  ],
   study_spots: [
     'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=800&q=80',
     'https://images.unsplash.com/photo-1566127444979-b3d2b654e3d7?auto=format&fit=crop&w=800&q=80',
@@ -91,10 +96,14 @@ export async function fetchLiveMapPlaces(query: string, centerLat?: number, cent
   } catch {}
 
   try {
-    // 1. Search OpenStreetMap Nominatim for tourist spots and POIs in the searched place
+    // 1. Search OpenStreetMap Nominatim for tourist spots, temples, theatres, and POIs in the searched place
+    const isTheatreSearch = /(theatre|theater|cinema|movie|film|screen|imax)/i.test(cleanQ);
+    const searchSuffix = isTheatreSearch 
+      ? ' cinema theatre multiplex hall' 
+      : ' tourist attraction landmark temple beach cinema theatre park';
     const endpoint = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-      cleanQ + ' tourist attraction landmark temple beach park'
-    )}&format=json&addressdetails=1&limit=25`;
+      cleanQ + searchSuffix
+    )}&format=json&addressdetails=1&limit=30`;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 6000);

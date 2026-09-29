@@ -1,4 +1,4 @@
-import type { LocationState } from '../types';
+import type { LocationState, Place } from '../types';
 
 export interface RealTimeLocationResult {
   id: string;
@@ -365,4 +365,94 @@ export async function detectLiveLocation(): Promise<LocationState> {
       }
     );
   });
+}
+
+/**
+ * Intelligent multi-word, synonym, category, and token-based place search
+ */
+export function matchesPlaceSearch(place: Place, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+
+  const name = place.name.toLowerCase();
+  const city = (place.city || '').toLowerCase();
+  const area = (place.area || '').toLowerCase();
+  const state = (place.state || '').toLowerCase();
+  const desc = (place.description || '').toLowerCase();
+  const cat = place.category.toLowerCase();
+  const perks = (place.studentPerks || []).join(' ').toLowerCase();
+
+  // Full string substring matches
+  if (
+    name.includes(q) ||
+    city.includes(q) ||
+    area.includes(q) ||
+    state.includes(q) ||
+    desc.includes(q) ||
+    cat.includes(q) ||
+    perks.includes(q)
+  ) {
+    return true;
+  }
+
+  // Theatre & Cinema intent matching
+  const isTheatreQuery = q.includes('theatre') || q.includes('theater') || q.includes('cinema') || q.includes('movie') || q.includes('film') || q.includes('multiplex') || q.includes('screen') || q.includes('fdfs');
+  if (isTheatreQuery && (place.category === 'theatres' || name.includes('cinema') || name.includes('theatre') || desc.includes('cinema') || desc.includes('theatre'))) {
+    return true;
+  }
+
+  // Temple intent matching
+  if ((q.includes('temple') || q.includes('mandir') || q.includes('kovil')) && (place.category === 'cultural_temples' || desc.includes('temple') || name.includes('temple'))) {
+    return true;
+  }
+
+  // Beach intent matching
+  if ((q.includes('beach') || q.includes('sea') || q.includes('coast')) && (desc.includes('beach') || name.includes('beach') || place.category === 'viewpoints')) {
+    return true;
+  }
+
+  // Cafe & Coffee intent matching
+  if ((q.includes('cafe') || q.includes('coffee')) && (place.category === 'cafes' || desc.includes('cafe') || desc.includes('coffee') || name.includes('cafe'))) {
+    return true;
+  }
+
+  // Food & Dining intent matching
+  if ((q.includes('food') || q.includes('eat') || q.includes('snack') || q.includes('biryani') || q.includes('dosa') || q.includes('tiffin')) && (place.category === 'street_food' || place.category === 'restaurants')) {
+    return true;
+  }
+
+  // Tokenized multi-word search (e.g. "theatres in chennai", "chennai movies", "beaches near chennai")
+  const stopWords = new Set(['in', 'at', 'near', 'and', 'the', 'of', 'for', 'to', 'with', 'all', 'top', 'best']);
+  const tokens = q.split(/\s+/).filter(t => t.length > 1 && !stopWords.has(t));
+
+  if (tokens.length > 1) {
+    const allTokensMatch = tokens.every(token => {
+      if (name.includes(token) || city.includes(token) || area.includes(token) || state.includes(token) || desc.includes(token) || perks.includes(token)) {
+        return true;
+      }
+      if (['theatre', 'theaters', 'theatres', 'theater', 'cinema', 'cinemas', 'movie', 'movies', 'film', 'films', 'multiplex'].includes(token) && (place.category === 'theatres' || name.includes('cinema') || name.includes('theatre'))) {
+        return true;
+      }
+      if (['temple', 'temples', 'mandir', 'kovil'].includes(token) && (place.category === 'cultural_temples' || name.includes('temple'))) {
+        return true;
+      }
+      if (['beach', 'beaches', 'sea', 'coast', 'ocean'].includes(token) && (name.includes('beach') || desc.includes('beach') || place.category === 'viewpoints')) {
+        return true;
+      }
+      if (['cafe', 'cafes', 'coffee'].includes(token) && (place.category === 'cafes' || name.includes('cafe') || desc.includes('coffee'))) {
+        return true;
+      }
+      if (['park', 'parks', 'garden', 'gardens', 'zoo', 'nature'].includes(token) && (place.category === 'parks_nature' || name.includes('park') || name.includes('garden'))) {
+        return true;
+      }
+      if (['mall', 'malls', 'shopping'].includes(token) && (place.category === 'shopping' || place.category === 'entertainment' || name.includes('mall'))) {
+        return true;
+      }
+      return false;
+    });
+
+    if (allTokensMatch) return true;
+  }
+
+  return false;
 }

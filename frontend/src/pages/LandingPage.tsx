@@ -10,7 +10,7 @@ import {
   CheckCircle2, Send, Tag, ChevronRight, ShieldCheck, Dice5
 } from 'lucide-react';
 import { fetchWeather, sendAIChat, type WeatherData } from '../utils/api';
-import { getPlacesWithLiveDistance, calculateDistanceKm } from '../utils/location';
+import { getPlacesWithLiveDistance, calculateDistanceKm, matchesPlaceSearch } from '../utils/location';
 import { fetchLiveMapPlaces } from '../utils/mapPlacesService';
 
 interface LandingPageProps {
@@ -134,17 +134,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     for (const place of placesSortedByProximity) {
       if (selectedCategory !== 'all' && place.category !== selectedCategory) continue;
 
-      const nameMatch = place.name.toLowerCase().includes(q);
-      const cityMatch = place.city && place.city.toLowerCase().includes(q);
-      const areaMatch = place.area && place.area.toLowerCase().includes(q);
-      const stateMatch = place.state && place.state.toLowerCase().includes(q);
-      const descMatch = place.description.toLowerCase().includes(q);
-      const catMatch = place.category.toLowerCase().includes(q) || (q.includes('temple') && place.category === 'cultural_temples');
-      const perksMatch = place.studentPerks && place.studentPerks.some((p) => p.toLowerCase().includes(q));
-
-      if (nameMatch || cityMatch || areaMatch || stateMatch || descMatch || catMatch || perksMatch) {
+      if (matchesPlaceSearch(place, q)) {
         directMatches.push(place);
         directIds.add(place.id);
+      }
+    }
+
+    // Graceful fallback: If category filter produced 0 matches for a searched query, show all matching spots in that city
+    if (directMatches.length === 0 && selectedCategory !== 'all') {
+      for (const place of placesSortedByProximity) {
+        if (matchesPlaceSearch(place, q)) {
+          directMatches.push(place);
+          directIds.add(place.id);
+        }
       }
     }
 

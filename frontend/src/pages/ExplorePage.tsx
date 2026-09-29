@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { MapPage } from './MapPage';
 import { DestinationSearchBar } from '../components/common/DestinationSearchBar';
-import { getPlacesWithLiveDistance, calculateDistanceKm } from '../utils/location';
+import { getPlacesWithLiveDistance, calculateDistanceKm, matchesPlaceSearch } from '../utils/location';
 import { fetchLiveMapPlaces } from '../utils/mapPlacesService';
 
 interface ExplorePageProps {
@@ -161,16 +161,18 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
     const directIds = new Set<string>();
 
     for (const p of placesWithLiveDistance) {
-      const nameMatch = p.name.toLowerCase().includes(q);
-      const descMatch = p.description.toLowerCase().includes(q);
-      const areaMatch = p.area && p.area.toLowerCase().includes(q);
-      const cityMatch = p.city && p.city.toLowerCase().includes(q);
-      const stateMatch = p.state && p.state.toLowerCase().includes(q);
-      const catMatch = p.category.toLowerCase().includes(q) || (q.includes('temple') && p.category === 'cultural_temples');
-      const perksMatch = p.studentPerks && p.studentPerks.some((pk) => pk.toLowerCase().includes(q));
-
-      if (nameMatch || descMatch || areaMatch || cityMatch || stateMatch || catMatch || perksMatch) {
+      if (matchesPlaceSearch(p, q)) {
         if (matchesGeneralFilters(p, true)) {
+          directMatches.push(p);
+          directIds.add(p.id);
+        }
+      }
+    }
+
+    // Graceful fallback: If a strict category filter yielded 0 results for a searched city, show all matching spots in that city
+    if (directMatches.length === 0 && filters.category !== 'all') {
+      for (const p of placesWithLiveDistance) {
+        if (matchesPlaceSearch(p, q)) {
           directMatches.push(p);
           directIds.add(p.id);
         }
