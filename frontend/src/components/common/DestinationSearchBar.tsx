@@ -8,10 +8,13 @@ import {
   ChevronRight, 
   Building2, 
   Star,
-  ArrowRight
+  ArrowRight,
+  Navigation,
+  Loader2
 } from 'lucide-react';
 import { INITIAL_FEATURED_PLACES } from '../../utils/constants';
 import { ALL_INDIAN_STATES_UTS } from '../../utils/indiaDestinations';
+import { searchRealTimeLocations, type RealTimeLocationResult } from '../../utils/location';
 import type { Place } from '../../types';
 
 interface DestinationSearchBarProps {
@@ -20,6 +23,9 @@ interface DestinationSearchBarProps {
   onSearch?: (query: string) => void;
   onSelectPlace?: (place: Place) => void;
   onSelectCity?: (city: string, state?: string) => void;
+  onSelectLocation?: (loc: { name: string; city: string; state: string; latitude: number; longitude: number; distanceKm?: number }) => void;
+  userLat?: number;
+  userLng?: number;
   placeholder?: string;
   className?: string;
   showSurpriseButton?: boolean;
@@ -104,12 +110,17 @@ export const DestinationSearchBar: React.FC<DestinationSearchBarProps> = ({
   onSearch,
   onSelectPlace,
   onSelectCity,
+  onSelectLocation,
+  userLat,
+  userLng,
   placeholder = 'Search by place, city, or state (e.g. Kerala, Jaipur, Borra Caves, Munnar)...',
   className = '',
   showSurpriseButton = false,
   onSurpriseMeClick,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [realTimeResults, setRealTimeResults] = useState<RealTimeLocationResult[]>([]);
+  const [isSearchingRealTime, setIsSearchingRealTime] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown on click outside
@@ -126,6 +137,35 @@ export const DestinationSearchBar: React.FC<DestinationSearchBarProps> = ({
   const normalizedQuery = useMemo(() => {
     return value.trim().toLowerCase();
   }, [value]);
+
+  // Debounced real-time live geocoding across ALL India
+  useEffect(() => {
+    if (!normalizedQuery || normalizedQuery.length < 2) {
+      setRealTimeResults([]);
+      setIsSearchingRealTime(false);
+      return;
+    }
+
+    let active = true;
+    setIsSearchingRealTime(true);
+
+    const timer = setTimeout(async () => {
+      try {
+        const live = await searchRealTimeLocations(normalizedQuery, userLat, userLng);
+        if (active) {
+          setRealTimeResults(live);
+          setIsSearchingRealTime(false);
+        }
+      } catch (err) {
+        if (active) setIsSearchingRealTime(false);
+      }
+    }, 250);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [normalizedQuery, userLat, userLng]);
 
   // Matching suggestions computed dynamically
   const suggestions = useMemo(() => {
@@ -188,11 +228,43 @@ export const DestinationSearchBar: React.FC<DestinationSearchBarProps> = ({
     };
   }, [normalizedQuery]);
 
-  const totalResults = suggestions.places.length + suggestions.cities.length + suggestions.states.length;
+  const totalResults = realTimeResults.length + suggestions.places.length + suggestions.cities.length + suggestions.states.length;
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handlePickRealTimeLocation = (loc: RealTimeLocationResult) => {
+    onChange(loc.name);
+    setIsOpen(false);
+    if (onSelectLocation) {
+      onSelectLocation(loc);
+    }
+    if (onSelectCity) {
+      onSelectCity(loc.city, loc.state);
+    }
+    if (onSearch) {
+      onSearch(loc.name);
+    }
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsOpen(false);
+
+    // If real-time location results are already available, select the top exact result
+    if (realTimeResults.length > 0) {
+      handlePickRealTimeLocation(realTimeResults[0]);
+      return;
+    }
+
+    // Try quick real-time geocode to pin exact coordinates
+    if (value.trim().length >= 2) {
+      try {
+        const live = await searchRealTimeLocations(value, userLat, userLng);
+        if (live.length > 0) {
+          handlePickRealTimeLocation(live[0]);
+          return;
+        }
+      } catch {}
+    }
+
     if (onSearch) {
       onSearch(value);
     }
@@ -201,6 +273,12 @@ export const DestinationSearchBar: React.FC<DestinationSearchBarProps> = ({
   const handlePickCity = (city: string, state?: string) => {
     onChange(city);
     setIsOpen(false);
+    const matchedLive = realTimeResults.find(
+      r => r.name.toLowerCase() === city.toLowerCase() || r.city.toLowerCase() === city.toLowerCase()
+    );
+    if (matchedLive && onSelectLocation) {
+      onSelectLocation(matchedLive);
+    }
     if (onSelectCity) {
       onSelectCity(city, state);
     } else if (onSearch) {
@@ -219,6 +297,16 @@ export const DestinationSearchBar: React.FC<DestinationSearchBarProps> = ({
   const handlePickPlace = (place: Place) => {
     onChange(place.name);
     setIsOpen(false);
+    if (onSelectLocation && place.latitude && place.longitude) {
+      onSelectLocation({
+        name: place.name,
+        city: place.city,
+        state: place.state || '',
+        latitude: place.latitude,
+        longitude: place.longitude,
+        distanceKm: place.distanceKm
+      });
+    }
     if (onSelectPlace) {
       onSelectPlace(place);
     } else if (onSearch) {
@@ -285,9 +373,77 @@ export const DestinationSearchBar: React.FC<DestinationSearchBarProps> = ({
 
       {/* Autocomplete Dropdown */}
       {isOpen && normalizedQuery.length >= 1 && (
-        <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl backdrop-blur-2xl overflow-hidden max-h-[460px] overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-150">
-          {totalResults > 0 ? (
+        <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl backdrop-blur-2xl overflow-hidden max-h-[480px] overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-150">
+          {totalResults > 0 || isSearchingRealTime ? (
             <div className="p-3 space-y-4">
+              
+              {/* Real-Time Geocoding Active Searching Badge */}
+              {isSearchingRealTime && (
+                <div className="px-3.5 py-2.5 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 flex items-center justify-between text-xs text-emerald-300">
+                  <div className="flex items-center gap-2.5">
+                    <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
+                    <span>Locating exact GPS coordinates for <strong>"{value}"</strong> across India...</span>
+                  </div>
+                  <span className="text-[10px] uppercase font-bold text-emerald-400/80 tracking-wider">
+                    Satellite Live
+                  </span>
+                </div>
+              )}
+
+              {/* 1. Exact Live Locations (Real-Time GPS) */}
+              {realTimeResults.length > 0 && (
+                <div>
+                  <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <Navigation className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                      Exact Live Locations 📍 (Real-Time GPS)
+                    </span>
+                    <span className="text-[10px] text-emerald-400/80 font-normal">
+                      Click to Pin & Center
+                    </span>
+                  </div>
+                  <div className="space-y-1.5 mt-1">
+                    {realTimeResults.map((loc) => (
+                      <button
+                        key={loc.id}
+                        type="button"
+                        onClick={() => handlePickRealTimeLocation(loc)}
+                        className="w-full p-2.5 rounded-2xl bg-slate-800/60 hover:bg-emerald-950/40 border border-emerald-500/20 hover:border-emerald-500/50 flex items-center justify-between text-left transition-all cursor-pointer group shadow-sm"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0 text-emerald-300 group-hover:scale-105 transition-transform">
+                            <MapPin className="w-5 h-5 text-emerald-400" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-bold text-sm text-white group-hover:text-emerald-300 transition-colors">
+                                {loc.name}
+                              </span>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-300 font-mono border border-emerald-500/20">
+                                {loc.latitude.toFixed(4)}°N, {loc.longitude.toFixed(4)}°E
+                              </span>
+                              {loc.distanceKm !== undefined && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-teal-500/10 text-teal-300 font-semibold border border-teal-500/20">
+                                  {loc.distanceKm} km away
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-400 truncate mt-0.5">
+                              {loc.displayName}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0 ml-2">
+                          <span className="hidden sm:inline-block text-[11px] font-semibold text-emerald-400 group-hover:underline">
+                            Select Location
+                          </span>
+                          <ChevronRight className="w-4 h-4 text-emerald-400 group-hover:translate-x-0.5 transition-transform" />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               
               {/* States & Union Territories Section */}
               {suggestions.states.length > 0 && (

@@ -1,8 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import { INITIAL_FEATURED_PLACES } from '../utils/constants';
 import { calculateDistanceKm } from '../utils/location';
-import { MapPin, Navigation2, Info, X, Layers, ZoomIn, ZoomOut } from 'lucide-react';
-import type { Place } from '../types';
+import { MapPin, Navigation2, Info, X, Layers, ZoomIn, ZoomOut, Compass } from 'lucide-react';
+import { DestinationSearchBar } from '../components/common/DestinationSearchBar';
+import type { Place, LocationState } from '../types';
 
 // Simple SVG-based interactive map without external dependencies
 // Each place is rendered as a pin on a stylized map background
@@ -15,6 +16,7 @@ interface MapPageProps {
   userLng?: number;
   currentCity?: string;
   currentArea?: string;
+  onUpdateLocation?: (loc: LocationState) => void;
 }
 
 // Default bounding box fallback
@@ -63,11 +65,13 @@ export const MapPage: React.FC<MapPageProps> = ({
   userLng,
   currentCity = 'Bengaluru',
   currentArea,
+  onUpdateLocation,
 }) => {
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [zoom, setZoom] = useState(1);
+  const [mapSearch, setMapSearch] = useState('');
 
   // Filter to places closest to user's live geo coordinates
   const cityPlaces = React.useMemo(() => {
@@ -150,6 +154,34 @@ export const MapPage: React.FC<MapPageProps> = ({
           {currentArea ? `Exploring near ${currentArea}, ${currentCity}. ` : ''}
           {cityPlaces.length} student-rated places pinned on the live map. Tap any pin for details.
         </p>
+      </div>
+
+      {/* Real-time Map Destination & Location Search */}
+      <div className="mb-6 max-w-2xl">
+        <DestinationSearchBar
+          value={mapSearch}
+          onChange={(val) => setMapSearch(val)}
+          onSearch={(q) => setMapSearch(q)}
+          onSelectLocation={(loc) => {
+            if (onUpdateLocation) {
+              onUpdateLocation({
+                city: loc.city || loc.name,
+                area: loc.name,
+                latitude: loc.latitude,
+                longitude: loc.longitude,
+                isDetected: true,
+              });
+            }
+            setMapSearch(loc.name);
+          }}
+          onSelectPlace={(p) => {
+            setSelectedPlace(p);
+            if (onViewPlaceDetails) onViewPlaceDetails(p);
+          }}
+          userLat={userLat}
+          userLng={userLng}
+          placeholder="Search and center any exact place on the map (e.g. Gorantla, Tirupati, Ooty, Taj Mahal)..."
+        />
       </div>
 
       {/* Category Filter Chips */}

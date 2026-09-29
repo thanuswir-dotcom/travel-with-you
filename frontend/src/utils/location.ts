@@ -1,5 +1,18 @@
 import type { LocationState } from '../types';
 
+export interface RealTimeLocationResult {
+  id: string;
+  name: string;
+  city: string;
+  state: string;
+  country: string;
+  displayName: string;
+  latitude: number;
+  longitude: number;
+  type?: string;
+  distanceKm?: number;
+}
+
 const KNOWN_HUBS = [
   { city: 'Bengaluru', area: 'Church Street & Central', lat: 12.9716, lng: 77.5946 },
   { city: 'Anantapur', area: 'Gorantla & JNTU Campus', lat: 13.985, lng: 77.772 },
@@ -23,6 +36,132 @@ export function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lo
     Math.sin(dLon/2) * Math.sin(dLon/2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   return R * c;
+}
+
+export async function searchRealTimeLocations(
+  query: string,
+  userLat?: number,
+  userLng?: number
+): Promise<RealTimeLocationResult[]> {
+  const cleanQuery = query.trim();
+  if (!cleanQuery || cleanQuery.length < 2) return [];
+
+  const results: RealTimeLocationResult[] = [];
+  const seen = new Set<string>();
+
+  // 1. Try Photon Komoot API (fast, CORS-friendly, worldwide OpenStreetMap data with high accuracy for India)
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+    let url = `https://photon.komoot.io/api/?q=${encodeURIComponent(cleanQuery)}&limit=8&lang=en`;
+    if (userLat !== undefined && userLng !== undefined && !isNaN(userLat) && !isNaN(userLng)) {
+      url += `&lat=${userLat}&lon=${userLng}`;
+    } else {
+      // Default center bias to India
+      url += `&lat=20.5937&lon=78.9629`;
+    }
+
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data && Array.isArray(data.features)) {
+        for (const feat of data.features) {
+          const props = feat.properties || {};
+          const geom = feat.geometry || {};
+          if (!geom.coordinates || geom.coordinates.length < 2) continue;
+          const [lng, lat] = geom.coordinates;
+          const name = props.name || props.city || props.district || cleanQuery;
+          const city = props.city || props.county || props.district || name;
+          const state = props.state || '';
+          const country = props.country || 'India';
+          const type = props.osm_value || props.type || 'place';
+
+          const key = `${name.toLowerCase()}_${Math.round(lat * 100)}_${Math.round(lng * 100)}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            const dist = (userLat !== undefined && userLng !== undefined && !isNaN(userLat) && !isNaN(userLng))
+              ? Math.round(calculateDistanceKm(userLat, userLng, lat, lng) * 10) / 10
+              : undefined;
+
+            results.push({
+              id: `geo-photon-${props.osm_id || Math.random().toString(36).substring(2, 9)}`,
+              name,
+              city,
+              state,
+              country,
+              displayName: [name, city !== name ? city : null, state, country].filter(Boolean).join(', '),
+              latitude: lat,
+              longitude: lng,
+              type,
+              distanceKm: dist
+            });
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Photon geocoding error:', err);
+  }
+
+  // 2. Fallback to OpenStreetMap Nominatim if Photon returns fewer than 2 results
+  if (results.length < 2) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+      const nomUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cleanQuery)}&format=json&limit=5&countrycodes=in&addressdetails=1`;
+      const res = await fetch(nomUrl, {
+        headers: { 'User-Agent': 'TravelWithYou/1.0' },
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const nomData = await res.json();
+        if (Array.isArray(nomData)) {
+          for (const item of nomData) {
+            const lat = parseFloat(item.lat);
+            const lng = parseFloat(item.lon);
+            if (isNaN(lat) || isNaN(lng)) continue;
+
+            const addr = item.address || {};
+            const name = addr.village || addr.town || addr.city || addr.suburb || item.name || cleanQuery;
+            const city = addr.city || addr.town || addr.county || addr.state_district || name;
+            const state = addr.state || '';
+            const country = addr.country || 'India';
+
+            const key = `${name.toLowerCase()}_${Math.round(lat * 100)}_${Math.round(lng * 100)}`;
+            if (!seen.has(key)) {
+              seen.add(key);
+              const dist = (userLat !== undefined && userLng !== undefined && !isNaN(userLat) && !isNaN(userLng))
+                ? Math.round(calculateDistanceKm(userLat, userLng, lat, lng) * 10) / 10
+                : undefined;
+
+              results.push({
+                id: `geo-nom-${item.osm_id || Math.random().toString(36).substring(2, 9)}`,
+                name,
+                city,
+                state,
+                country,
+                displayName: item.display_name,
+                latitude: lat,
+                longitude: lng,
+                type: item.type || item.class || 'location',
+                distanceKm: dist
+              });
+            }
+          }
+        }
+      }
+    } catch (nomErr) {
+      console.warn('Nominatim fallback geocoding error:', nomErr);
+    }
+  }
+
+  return results;
 }
 
 export function getPlacesWithLiveDistance<T extends { latitude: number; longitude: number; distanceKm?: number }>(

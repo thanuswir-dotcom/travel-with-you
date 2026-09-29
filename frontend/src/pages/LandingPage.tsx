@@ -19,6 +19,7 @@ interface LandingPageProps {
   onToggleSave: (placeId: string) => void;
   onViewPlaceDetails: (place: Place) => void;
   onTriggerSurprise: () => void;
+  onUpdateLocation?: (loc: LocationState) => void;
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({
@@ -28,6 +29,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onToggleSave,
   onViewPlaceDetails,
   onTriggerSurprise,
+  onUpdateLocation,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<PlaceCategory | 'all'>('all');
@@ -147,8 +149,56 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         onStudentModeClick={() => setActiveTab('planner')}
         onSurpriseMeClick={onTriggerSurprise}
         onSelectPlace={onViewPlaceDetails}
+        onSelectLocation={(loc) => {
+          if (onUpdateLocation) {
+            onUpdateLocation({
+              city: loc.city || loc.name,
+              area: loc.name,
+              latitude: loc.latitude,
+              longitude: loc.longitude,
+              isDetected: true,
+            });
+          }
+          setSearchQuery(loc.name);
+          const element = document.getElementById('popular-places');
+          element?.scrollIntoView({ behavior: 'smooth' });
+        }}
         currentCity={location.city}
+        userLat={location.latitude}
+        userLng={location.longitude}
       />
+
+      {/* ── ACTIVE TARGET LOCATION NOTICE ─────────────────────────────────── */}
+      {location.isDetected && location.latitude && location.longitude && (
+        <div className="bg-gradient-to-r from-emerald-950/50 via-slate-900/80 to-teal-950/50 border-y border-emerald-500/20 py-2.5 px-4 text-xs">
+          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-slate-300">
+              <span className="flex h-2 w-2 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span>
+                Active Target: <strong className="text-white">{location.area}</strong>, {location.city}
+              </span>
+              <span className="hidden sm:inline-block font-mono text-[11px] text-emerald-300 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
+                {location.latitude.toFixed(4)}°N, {location.longitude.toFixed(4)}°E
+              </span>
+              <span className="text-slate-400 hidden md:inline">
+                • Real-time distance and nearby places recalculated
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setActiveTab('map')}
+                className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-xs font-semibold border border-emerald-500/30 transition-all cursor-pointer flex items-center gap-1"
+              >
+                <Compass className="w-3.5 h-3.5" />
+                <span>View on Map</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── SECTION 2: SEARCH QUICK PILLS ──────────────────────────────────── */}
       <section className="py-4 border-y border-slate-800/80 bg-slate-950/60 overflow-x-auto no-scrollbar">

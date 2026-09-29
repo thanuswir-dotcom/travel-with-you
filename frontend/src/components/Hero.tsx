@@ -20,7 +20,10 @@ interface HeroProps {
   onStudentModeClick: () => void;
   onSurpriseMeClick: () => void;
   onSelectPlace?: (place: Place) => void;
+  onSelectLocation?: (loc: { name: string; city: string; state: string; latitude: number; longitude: number; distanceKm?: number }) => void;
   currentCity: string;
+  userLat?: number;
+  userLng?: number;
 }
 
 export const Hero: React.FC<HeroProps> = ({
@@ -31,7 +34,10 @@ export const Hero: React.FC<HeroProps> = ({
   onStudentModeClick,
   onSurpriseMeClick,
   onSelectPlace,
+  onSelectLocation,
   currentCity,
+  userLat,
+  userLng,
 }) => {
   const [localInput, setLocalInput] = useState(searchQuery);
 
@@ -101,6 +107,9 @@ export const Hero: React.FC<HeroProps> = ({
               setSearchQuery(city);
               onSearch(city);
             }}
+            onSelectLocation={onSelectLocation}
+            userLat={userLat}
+            userLng={userLng}
             showSurpriseButton={true}
             onSurpriseMeClick={onSurpriseMeClick}
             placeholder="Search tourist spot, city, or state (e.g. Kerala, Jaipur, Borra Caves, Munnar)..."

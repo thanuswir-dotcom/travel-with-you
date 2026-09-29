@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { PlaceCard } from '../components/PlaceCard';
 import { INITIAL_FEATURED_PLACES, CATEGORIES } from '../utils/constants';
-import type { Place, PlaceCategory, ActiveTab } from '../types';
+import type { Place, PlaceCategory, ActiveTab, LocationState } from '../types';
 import {
   Search, X, MapPin, Star, Wifi, Zap, Trees, Filter,
   ChevronDown, RotateCcw, Sparkles, Map as MapIcon, List,
@@ -19,6 +19,7 @@ interface ExplorePageProps {
   currentCity?: string;
   userLat?: number;
   userLng?: number;
+  onUpdateLocation?: (loc: LocationState) => void;
 }
 
 type SortOption = 'distance' | 'rating' | 'cost_asc' | 'cost_desc' | 'reviews';
@@ -56,6 +57,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
   currentCity = 'Bengaluru',
   userLat,
   userLng,
+  onUpdateLocation,
 }) => {
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState<Filters>(defaultFilters);
@@ -194,6 +196,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
           userLat={userLat}
           userLng={userLng}
           currentCity={currentCity}
+          onUpdateLocation={onUpdateLocation}
         />
       ) : (
         <>
@@ -209,9 +212,23 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
                   setQuery(p.name);
                   onViewPlaceDetails(p);
                 }}
+                onSelectLocation={(loc) => {
+                  if (onUpdateLocation) {
+                    onUpdateLocation({
+                      city: loc.city || loc.name,
+                      area: loc.name,
+                      latitude: loc.latitude,
+                      longitude: loc.longitude,
+                      isDetected: true,
+                    });
+                  }
+                  setQuery(loc.name);
+                }}
                 onSelectCity={(city) => {
                   setQuery(city);
                 }}
+                userLat={userLat}
+                userLng={userLng}
                 placeholder="Search tourist spot, city, or state across all India (e.g. Kerala, Jaipur, Borra Caves, Munnar)..."
               />
             </div>

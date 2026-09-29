@@ -129,6 +129,15 @@ export default function App() {
     }
   };
 
+  const handleUpdateLocation = (newLoc: LocationState) => {
+    setLocation(newLoc);
+    try {
+      localStorage.setItem('twy_location', JSON.stringify(newLoc));
+    } catch {}
+    setLocationNotification(`📍 Active location set to: ${newLoc.area}, ${newLoc.city}!`);
+    setTimeout(() => setLocationNotification(null), 4000);
+  };
+
   // Auto-detect location on load: IP fast-fallback followed immediately by GPS request
   useEffect(() => {
     const stored = localStorage.getItem('twy_location');
@@ -221,6 +230,7 @@ export default function App() {
             onToggleSave={handleToggleSave}
             onViewPlaceDetails={(p) => setSelectedPlace(p)}
             onTriggerSurprise={handleTriggerSurprise}
+            onUpdateLocation={handleUpdateLocation}
           />
         )}
 
@@ -233,6 +243,7 @@ export default function App() {
             currentCity={location.city}
             userLat={location.latitude}
             userLng={location.longitude}
+            onUpdateLocation={handleUpdateLocation}
           />
         )}
 
@@ -245,6 +256,7 @@ export default function App() {
             userLng={location.longitude}
             currentCity={location.city}
             currentArea={location.area}
+            onUpdateLocation={handleUpdateLocation}
           />
         )}
 
