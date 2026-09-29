@@ -188,6 +188,11 @@ export default function App() {
       localStorage.removeItem('twy_user');
       localStorage.removeItem('twy_saved_places');
       localStorage.removeItem('twy_memories');
+      localStorage.removeItem('twy_trips');
+      localStorage.removeItem('twy_total_budget');
+      localStorage.removeItem('twy_budget_friends');
+      localStorage.removeItem('twy_budget_expenses');
+      localStorage.removeItem('twy_budget_saved');
       setSavedPlaceIds([]);
     } catch {}
     setActiveTab('home');

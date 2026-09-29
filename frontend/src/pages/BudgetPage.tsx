@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Wallet, Users, Plus, Trash2, Calculator, RotateCcw, ChevronDown, PiggyBank } from 'lucide-react';
 
 interface Expense {
@@ -23,17 +23,40 @@ const EXPENSE_CATEGORIES = [
 ];
 
 export const BudgetPage: React.FC = () => {
-  const [totalBudget, setTotalBudget] = useState(1500);
-  const [friends, setFriends] = useState<Friend[]>([
-    { id: 'f1', name: 'You' },
-    { id: 'f2', name: 'Arjun' },
-    { id: 'f3', name: 'Priya' },
-  ]);
+  // Fresh/new users start with ₹0 budget until they configure it
+  const [totalBudget, setTotalBudget] = useState<number>(() => {
+    try {
+      const stored = localStorage.getItem('twy_total_budget');
+      if (stored !== null) return Number(stored) || 0;
+    } catch {}
+    return 0;
+  });
+
+  const [friends, setFriends] = useState<Friend[]>(() => {
+    try {
+      const stored = localStorage.getItem('twy_budget_friends');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return [{ id: 'f1', name: 'You' }];
+  });
+
   const [newFriendName, setNewFriendName] = useState('');
-  const [expenses, setExpenses] = useState<Expense[]>([
-    { id: 'e1', description: 'Butter Dosa x3', amount: 120, paidBy: 'f1', category: 'food' },
-    { id: 'e2', description: 'Rapido to Cubbon Park', amount: 90, paidBy: 'f2', category: 'transport' },
-  ]);
+  
+  // Expenses start empty for new accounts
+  const [expenses, setExpenses] = useState<Expense[]>(() => {
+    try {
+      const stored = localStorage.getItem('twy_budget_expenses');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {}
+    return [];
+  });
+
   const [newExpense, setNewExpense] = useState({
     description: '',
     amount: '',
@@ -43,9 +66,20 @@ export const BudgetPage: React.FC = () => {
   const [splitResult, setSplitResult] = useState<Record<string, number> | null>(null);
   const [activeSection, setActiveSection] = useState<'budget' | 'expenses' | 'split'>('budget');
 
-  const totalSpent = expenses.reduce((sum, e) => sum + e.amount, 0);
-  const remaining = totalBudget - totalSpent;
-  const spentPercent = Math.min((totalSpent / totalBudget) * 100, 100);
+  const totalSpent = expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+  const remaining = totalBudget > 0 ? totalBudget - totalSpent : 0;
+  const spentPercent = totalBudget > 0 ? Math.min((totalSpent / totalBudget) * 100, 100) : 0;
+
+  // Persist budget updates to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('twy_total_budget', String(totalBudget));
+      localStorage.setItem('twy_budget_friends', JSON.stringify(friends));
+      localStorage.setItem('twy_budget_expenses', JSON.stringify(expenses));
+      const saved = totalBudget > 0 ? Math.max(0, totalBudget - totalSpent) : 0;
+      localStorage.setItem('twy_budget_saved', String(saved));
+    } catch {}
+  }, [totalBudget, friends, expenses, totalSpent]);
 
   const addFriend = () => {
     if (!newFriendName.trim()) return;
@@ -161,15 +195,16 @@ export const BudgetPage: React.FC = () => {
               <span className="text-3xl font-extrabold text-emerald-400">₹</span>
               <input
                 type="number"
-                value={totalBudget}
-                onChange={(e) => setTotalBudget(Number(e.target.value))}
-                className="text-3xl font-extrabold bg-transparent text-white outline-none w-32"
-                min={100}
-                step={100}
+                value={totalBudget === 0 ? '' : totalBudget}
+                placeholder="0"
+                onChange={(e) => setTotalBudget(Math.max(0, Number(e.target.value) || 0))}
+                className="text-3xl font-extrabold bg-transparent text-white outline-none w-36"
+                min={0}
+                step={50}
               />
             </div>
             <div className="text-xs text-slate-400 mb-3">
-              ₹{Math.floor(totalBudget / friends.length)} per person • {friends.length} people
+              ₹{friends.length > 0 && totalBudget > 0 ? Math.floor(totalBudget / friends.length) : 0} per person • {friends.length} {friends.length === 1 ? 'person' : 'people'}
             </div>
 
             {/* Progress bar */}

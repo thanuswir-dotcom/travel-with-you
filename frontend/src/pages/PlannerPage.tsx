@@ -59,6 +59,7 @@ export const PlannerPage: React.FC<PlannerPageProps> = ({ city }) => {
 
   const handleGeneratePlan = async () => {
     setIsGenerating(true);
+    setIsTripSaved(false);
     setTripPlan(null);
 
     const request: TripPlanRequest = {
@@ -72,6 +73,19 @@ export const PlannerPage: React.FC<PlannerPageProps> = ({ city }) => {
     const plan = await generateTripPlan(request);
     setTripPlan(plan);
     setIsGenerating(false);
+  };
+
+  const handleSaveTrip = () => {
+    setIsTripSaved(true);
+    if (!tripPlan) return;
+    try {
+      const stored = localStorage.getItem('twy_trips');
+      const trips = stored ? JSON.parse(stored) : [];
+      if (!trips.some((t: any) => t.title === tripPlan.title)) {
+        trips.push({ ...tripPlan, id: `trip-${Date.now()}`, savedAt: new Date().toISOString() });
+        localStorage.setItem('twy_trips', JSON.stringify(trips));
+      }
+    } catch {}
   };
 
   const handleSendChat = async () => {
@@ -316,7 +330,7 @@ export const PlannerPage: React.FC<PlannerPageProps> = ({ city }) => {
                   </div>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => setIsTripSaved(true)}
+                      onClick={handleSaveTrip}
                       className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                         isTripSaved
                           ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'

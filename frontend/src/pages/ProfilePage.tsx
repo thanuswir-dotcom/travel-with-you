@@ -43,6 +43,74 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Dynamic user stats initialized to 0 for new accounts
+  const [tripsPlannedCount, setTripsPlannedCount] = useState<number>(0);
+  const [memoriesCount, setMemoriesCount] = useState<number>(0);
+  const [budgetSaved, setBudgetSaved] = useState<number>(0);
+
+  useEffect(() => {
+    // 1. Calculate memories count for this user
+    try {
+      const storedMem = localStorage.getItem('twy_memories');
+      if (storedMem) {
+        const parsed = JSON.parse(storedMem);
+        if (Array.isArray(parsed)) {
+          const userOnly = parsed.filter(
+            (m: any) =>
+              m &&
+              !['m1', 'm2', 'm3', 'm4', 'm5', 'mem-1', 'mem-2', 'mem-3', 'mem-4'].includes(m.id) &&
+              (m.userId === user?.id || m.userName === user?.fullName || m.isUserUploaded)
+          );
+          setMemoriesCount(userOnly.length);
+        } else {
+          setMemoriesCount(0);
+        }
+      } else {
+        setMemoriesCount(0);
+      }
+    } catch {
+      setMemoriesCount(0);
+    }
+
+    // 2. Calculate trips planned count
+    try {
+      const storedTrips = localStorage.getItem('twy_trips');
+      if (storedTrips) {
+        const parsed = JSON.parse(storedTrips);
+        if (Array.isArray(parsed)) {
+          setTripsPlannedCount(parsed.length);
+        } else {
+          setTripsPlannedCount(0);
+        }
+      } else {
+        setTripsPlannedCount(0);
+      }
+    } catch {
+      setTripsPlannedCount(0);
+    }
+
+    // 3. Calculate budget saved
+    try {
+      const totalBudget = Number(localStorage.getItem('twy_total_budget') || '0');
+      const storedExpenses = localStorage.getItem('twy_budget_expenses');
+      let spent = 0;
+      if (storedExpenses) {
+        const parsed = JSON.parse(storedExpenses);
+        if (Array.isArray(parsed)) {
+          spent = parsed.reduce((sum: number, e: any) => sum + (Number(e.amount) || 0), 0);
+        }
+      }
+      if (totalBudget > 0) {
+        setBudgetSaved(Math.max(0, totalBudget - spent));
+      } else {
+        const directSaved = Number(localStorage.getItem('twy_budget_saved') || '0');
+        setBudgetSaved(directSaved);
+      }
+    } catch {
+      setBudgetSaved(0);
+    }
+  }, [user]);
+
   // Sync state if user changes
   React.useEffect(() => {
     if (user.fullName) setFullName(user.fullName);
@@ -173,7 +241,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
             onClick={() => setActiveTab('planner')}
             className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800/80 text-center hover:border-emerald-500/30 cursor-pointer transition-colors"
           >
-            <div className="text-xl font-black text-emerald-400">4</div>
+            <div className="text-xl font-black text-emerald-400">{tripsPlannedCount}</div>
             <div className="text-[11px] text-slate-400 mt-0.5 flex items-center justify-center gap-1">
               <Compass className="w-3 h-3 text-emerald-400" />
               Trips Planned
@@ -184,7 +252,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
             onClick={() => setActiveTab('memories')}
             className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800/80 text-center hover:border-emerald-500/30 cursor-pointer transition-colors"
           >
-            <div className="text-xl font-black text-cyan-400">3</div>
+            <div className="text-xl font-black text-cyan-400">{memoriesCount}</div>
             <div className="text-[11px] text-slate-400 mt-0.5 flex items-center justify-center gap-1">
               <Camera className="w-3 h-3 text-cyan-400" />
               Memories Logged
@@ -195,7 +263,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
             onClick={() => setActiveTab('budget')}
             className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800/80 text-center hover:border-emerald-500/30 cursor-pointer transition-colors"
           >
-            <div className="text-xl font-black text-amber-400">₹850</div>
+            <div className="text-xl font-black text-amber-400">₹{budgetSaved}</div>
             <div className="text-[11px] text-slate-400 mt-0.5 flex items-center justify-center gap-1">
               <Wallet className="w-3 h-3 text-amber-400" />
               Budget Saved
