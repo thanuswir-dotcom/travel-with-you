@@ -20,6 +20,8 @@ interface NavbarProps {
   onOpenCitySelector?: () => void;
   isDemoMode: boolean;
   user?: UserProfile | null;
+  onLogout?: () => void;
+  isDetectingLocation?: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -31,8 +33,11 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenCitySelector,
   isDemoMode,
   user,
+  onLogout,
+  isDetectingLocation = false,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
   const navItems = [
     { id: 'home' as ActiveTab, label: 'Home' },
@@ -74,25 +79,25 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </div>
 
-          {/* Location Detector Pill */}
+          {/* Student Campus Location Pill */}
           <div 
             onClick={onOpenCitySelector}
-            className="hidden lg:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-slate-800 text-xs text-slate-300 hover:border-emerald-500/40 cursor-pointer transition-all"
-            title="Click to change campus hub"
+            className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-slate-800 text-xs text-slate-300 hover:border-emerald-500/40 cursor-pointer transition-all max-w-[210px] sm:max-w-xs md:max-w-sm truncate"
+            title="Click to change campus hub or tap GPS icon to update live location"
           >
-            <MapPin className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-            <span className="text-slate-400">Exploring:</span>
-            <strong className="text-white font-semibold">{location.area}, {location.city}</strong>
-            <ChevronDown className="w-3 h-3 text-slate-500 ml-0.5" />
+            <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0 animate-pulse" />
+            <span className="text-slate-400 hidden sm:inline">Exploring:</span>
+            <strong className="text-white font-semibold truncate">{location.area}, {location.city}</strong>
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onDetectLocation();
               }}
-              title="Detect Current GPS Location"
-              className="ml-1 p-1 hover:bg-slate-800 rounded-full text-slate-400 hover:text-emerald-300 transition-colors"
+              disabled={isDetectingLocation}
+              title="Click to detect your current live GPS location"
+              className="ml-1 p-1 hover:bg-slate-800 rounded-full text-slate-400 hover:text-emerald-300 transition-colors shrink-0 disabled:opacity-50 cursor-pointer"
             >
-              <Navigation className="w-3 h-3" />
+              <Navigation className={`w-3.5 h-3.5 text-emerald-400 ${isDetectingLocation ? 'animate-spin' : ''}`} />
             </button>
           </div>
 
@@ -114,28 +119,76 @@ export const Navbar: React.FC<NavbarProps> = ({
           </nav>
 
           {/* Right Action Buttons */}
-          <div className="hidden sm:flex items-center gap-2.5">
+          <div className="hidden sm:flex items-center gap-2.5 relative">
             {user ? (
-              <button
-                onClick={() => setActiveTab('profile')}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-2xl border transition-all cursor-pointer ${
-                  activeTab === 'profile'
-                    ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
-                    : 'bg-slate-900 border-slate-800 text-slate-200 hover:border-slate-700'
-                }`}
-              >
-                <img
-                  src={user.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'}
-                  alt={user.fullName}
-                  className="w-6 h-6 rounded-full object-cover"
-                />
-                <span className="text-xs font-bold">{user.fullName.split(' ')[0]}</span>
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-2xl border transition-all cursor-pointer ${
+                    activeTab === 'profile'
+                      ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
+                      : 'bg-slate-900 border-slate-800 text-slate-200 hover:border-slate-700'
+                  }`}
+                >
+                  <img
+                    src={user.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'}
+                    alt={user.fullName}
+                    className="w-6 h-6 rounded-full object-cover"
+                  />
+                  <span className="text-xs font-bold">{user.fullName.split(' ')[0]}</span>
+                  <ChevronDown className="w-3 h-3 text-slate-400 ml-0.5" />
+                </button>
+
+                {/* User Dropdown Menu */}
+                {userDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-slate-900/95 border border-slate-800 shadow-2xl backdrop-blur-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="px-3.5 py-2 border-b border-slate-800/80">
+                      <p className="text-xs font-bold text-white truncate">{user.fullName}</p>
+                      <p className="text-[11px] text-slate-400 truncate">{user.email || user.phone || 'Student'}</p>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setActiveTab('profile');
+                        setUserDropdownOpen(false);
+                      }}
+                      className="w-full text-left px-3.5 py-2 text-xs text-slate-300 hover:text-white hover:bg-slate-800/60 flex items-center gap-2"
+                    >
+                      <User className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>My Profile & Wishlist</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        onOpenAuth('login');
+                        setUserDropdownOpen(false);
+                      }}
+                      className="w-full text-left px-3.5 py-2 text-xs text-slate-300 hover:text-white hover:bg-slate-800/60 flex items-center gap-2"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Switch / Log In Another</span>
+                    </button>
+
+                    {onLogout && (
+                      <button
+                        onClick={() => {
+                          onLogout();
+                          setUserDropdownOpen(false);
+                        }}
+                        className="w-full text-left px-3.5 py-2 text-xs text-rose-400 hover:bg-rose-500/10 flex items-center gap-2 border-t border-slate-800/80 mt-1"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                        <span>Log Out</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             ) : (
               <>
                 <button
                   onClick={() => onOpenAuth('login')}
-                  className="px-4 py-2 rounded-xl text-xs sm:text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-900 border border-transparent hover:border-slate-800 transition-all cursor-pointer"
+                  className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-emerald-400 hover:text-white bg-slate-900 hover:bg-slate-800 border border-emerald-500/30 transition-all cursor-pointer shadow-sm"
                 >
                   Log In
                 </button>
@@ -217,25 +270,66 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           </div>
 
-          <div className="pt-3 border-t border-slate-800/80 flex gap-2">
-            <button
-              onClick={() => {
-                onOpenAuth('login');
-                setMobileMenuOpen(false);
-              }}
-              className="flex-1 py-2.5 text-center text-xs font-medium text-slate-300 bg-slate-900 border border-slate-800 rounded-xl"
-            >
-              Log In
-            </button>
-            <button
-              onClick={() => {
-                onOpenAuth('signup');
-                setMobileMenuOpen(false);
-              }}
-              className="flex-1 py-2.5 text-center text-xs font-semibold text-slate-950 bg-emerald-400 rounded-xl"
-            >
-              Sign Up
-            </button>
+          <div className="pt-3 border-t border-slate-800/80">
+            {user ? (
+              <div className="flex items-center justify-between gap-2 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
+                <div className="flex items-center gap-2 truncate">
+                  <img
+                    src={user.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'}
+                    alt={user.fullName}
+                    className="w-7 h-7 rounded-full object-cover shrink-0"
+                  />
+                  <div className="truncate">
+                    <p className="text-xs font-bold text-white truncate">{user.fullName}</p>
+                    <p className="text-[10px] text-slate-400 truncate">{user.email || user.phone || 'Student'}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    onClick={() => {
+                      onOpenAuth('login');
+                      setMobileMenuOpen(false);
+                    }}
+                    className="px-2 py-1 rounded-lg bg-slate-800 text-[11px] text-slate-300 hover:text-white"
+                  >
+                    Switch
+                  </button>
+                  {onLogout && (
+                    <button
+                      onClick={() => {
+                        onLogout();
+                        setMobileMenuOpen(false);
+                      }}
+                      className="px-2 py-1 rounded-lg bg-rose-500/10 text-[11px] text-rose-400 hover:bg-rose-500/20"
+                    >
+                      Log Out
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    onOpenAuth('login');
+                    setMobileMenuOpen(false);
+                  }}
+                  className="flex-1 py-2.5 text-center text-xs font-semibold text-emerald-400 bg-slate-900 border border-emerald-500/30 rounded-xl"
+                >
+                  Log In
+                </button>
+                <button
+                  onClick={() => {
+                    onOpenAuth('signup');
+                    setMobileMenuOpen(false);
+                  }}
+                  className="flex-1 py-2.5 text-center text-xs font-semibold text-slate-950 bg-emerald-400 rounded-xl"
+                >
+                  Sign Up
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -61,6 +61,7 @@ export interface LocationState {
 export interface UserProfile {
   id: string;
   email: string;
+  phone?: string;
   fullName: string;
   collegeName?: string;
   city: string;

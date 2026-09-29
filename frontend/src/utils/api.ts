@@ -1,5 +1,7 @@
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 
-  (typeof window !== 'undefined' && window.location.hostname !== 'localhost' ? `${window.location.origin}/api` : 'http://localhost:5000/api');
+  (typeof window !== 'undefined' && window.location.hostname !== 'localhost' 
+    ? 'https://travel-with-you-backend.onrender.com/api' 
+    : 'http://localhost:5000/api');
 
 export async function fetchPlaces(params: Record<string, string | number | boolean> = {}) {
   try {

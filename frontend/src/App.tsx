@@ -20,8 +20,10 @@ import { SavedPage } from './pages/SavedPage';
 import { MemoriesPage } from './pages/MemoriesPage';
 import { ProfilePage } from './pages/ProfilePage';
 
+import { User } from 'lucide-react';
 import { INITIAL_FEATURED_PLACES } from './utils/constants';
 import { toggleSavePlaceBackend } from './utils/api';
+import { detectLiveLocation } from './utils/location';
 import type { ActiveTab, AuthMode, LocationState, Place, UserProfile } from './types';
 
 export default function App() {
@@ -29,15 +31,14 @@ export default function App() {
   const [authMode, setAuthMode] = useState<AuthMode>(null);
   const [isDemoMode] = useState(true);
 
-  // Authenticated Student User state (Defaults to verified student for seamless hackathon demo)
-  const [user, setUser] = useState<UserProfile | null>({
-    id: 'usr-student-1',
-    email: 'pooja.student@rvce.edu',
-    fullName: 'Pooja Sharma',
-    collegeName: 'RV College of Engineering',
-    city: 'Bengaluru',
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
-    preferredVibe: ['cafes', 'study_spots', 'street_food', 'photo_spots'],
+  // Authenticated Student User state (Defaults to stored session or null so Log In is always available)
+  const [user, setUser] = useState<UserProfile | null>(() => {
+    try {
+      const stored = localStorage.getItem('twy_user');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
   });
 
   // Saved places IDs persisted in localStorage
@@ -50,15 +51,29 @@ export default function App() {
     }
   });
 
-  // Current Location State (Default: Bengaluru Student District)
-  const [location, setLocation] = useState<LocationState>({
-    city: 'Bengaluru',
-    area: 'Church Street & Central',
-    latitude: 12.9749,
-    longitude: 77.6082,
-    isDetected: false,
+  // Current Location State (Defaults to stored location or Bengaluru Student District)
+  const [location, setLocation] = useState<LocationState>(() => {
+    try {
+      const stored = localStorage.getItem('twy_location');
+      return stored ? JSON.parse(stored) : {
+        city: 'Bengaluru',
+        area: 'Church Street & Central',
+        latitude: 12.9749,
+        longitude: 77.6082,
+        isDetected: false,
+      };
+    } catch {
+      return {
+        city: 'Bengaluru',
+        area: 'Church Street & Central',
+        latitude: 12.9749,
+        longitude: 77.6082,
+        isDetected: false,
+      };
+    }
   });
 
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [locationNotification, setLocationNotification] = useState<string | null>(null);
 
   // Modals state
@@ -96,36 +111,39 @@ export default function App() {
     setIsSurpriseModalOpen(true);
   };
 
-  // Browser Geolocation Detection with safe error handling
-  const handleDetectLocation = () => {
-    if (!navigator.geolocation) {
-      setLocationNotification('Geolocation is not supported by your browser. Using Bengaluru student hub.');
+  // Browser Geolocation Detection with Live Reverse Geocoding
+  const handleDetectLocation = async () => {
+    setIsDetectingLocation(true);
+    setLocationNotification('🛰️ Requesting live GPS location from your device...');
+
+    try {
+      const liveLoc = await detectLiveLocation();
+      setLocation(liveLoc);
+      setLocationNotification(`📍 Live location updated: ${liveLoc.area}, ${liveLoc.city}!`);
       setTimeout(() => setLocationNotification(null), 4000);
-      return;
+    } catch (err: any) {
+      console.warn('Geolocation error:', err);
+      setLocationNotification(`⚠️ ${err.message || 'Could not fetch live location.'}`);
+      setTimeout(() => setLocationNotification(null), 4500);
+    } finally {
+      setIsDetectingLocation(false);
     }
+  };
 
-    setLocationNotification('Detecting your current location...');
+  // Auth Handlers (save session to localStorage)
+  const handleAuthSuccess = (u: UserProfile) => {
+    setUser(u);
+    try {
+      localStorage.setItem('twy_user', JSON.stringify(u));
+    } catch {}
+    setAuthMode(null);
+  };
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        setLocation({
-          city: 'Bengaluru',
-          area: 'Nearby Campus Area',
-          latitude,
-          longitude,
-          isDetected: true,
-        });
-        setLocationNotification('✓ Location detected! Showing student places near you.');
-        setTimeout(() => setLocationNotification(null), 3000);
-      },
-      (error) => {
-        console.warn('Geolocation denied or unavailable:', error.message);
-        setLocationNotification('Location access was denied. Showing Bengaluru student hub.');
-        setTimeout(() => setLocationNotification(null), 4000);
-      },
-      { timeout: 8000 }
-    );
+  const handleLogout = () => {
+    setUser(null);
+    try {
+      localStorage.removeItem('twy_user');
+    } catch {}
   };
 
   return (
@@ -154,6 +172,8 @@ export default function App() {
         onOpenCitySelector={() => setIsCitySelectorOpen(true)}
         isDemoMode={isDemoMode}
         user={user}
+        onLogout={handleLogout}
+        isDetectingLocation={isDetectingLocation}
       />
 
       {/* Main Content Area */}
@@ -211,13 +231,41 @@ export default function App() {
           <MemoriesPage />
         )}
 
-        {activeTab === 'profile' && user && (
-          <ProfilePage
-            user={user}
-            savedCount={savedPlaceIds.length}
-            setActiveTab={setActiveTab}
-            onLogout={() => setUser(null)}
-          />
+        {activeTab === 'profile' && (
+          user ? (
+            <ProfilePage
+              user={user}
+              savedCount={savedPlaceIds.length}
+              setActiveTab={setActiveTab}
+              onLogout={handleLogout}
+            />
+          ) : (
+            <div className="min-h-[70vh] flex flex-col items-center justify-center p-6 text-center">
+              <div className="max-w-md w-full p-8 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl backdrop-blur-xl">
+                <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mx-auto mb-4 text-emerald-400">
+                  <User className="w-8 h-8" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Student Profile & Wishlist</h3>
+                <p className="text-sm text-slate-400 mb-6 leading-relaxed">
+                  Log in with your Mobile number (OTP) or Gmail ID to manage saved spots, track student squad budgets, and upload memories.
+                </p>
+                <div className="flex flex-col gap-3">
+                  <button
+                    onClick={() => setAuthMode('login')}
+                    className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/25 transition-all cursor-pointer"
+                  >
+                    Log In with Mobile / Gmail
+                  </button>
+                  <button
+                    onClick={() => setAuthMode('signup')}
+                    className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition-colors cursor-pointer"
+                  >
+                    Create New Account
+                  </button>
+                </div>
+              </div>
+            </div>
+          )
         )}
       </main>
 
@@ -229,6 +277,8 @@ export default function App() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         savedCount={savedPlaceIds.length}
+        user={user}
+        onOpenAuth={(mode) => setAuthMode(mode)}
       />
 
       {/* Global Floating AI Assistant */}
@@ -267,10 +317,7 @@ export default function App() {
       {authMode === 'login' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
           <LoginForm
-            onSuccess={(u) => {
-              setUser(u);
-              setAuthMode(null);
-            }}
+            onSuccess={handleAuthSuccess}
             onSwitchToSignup={() => setAuthMode('signup')}
             onClose={() => setAuthMode(null)}
           />
@@ -280,10 +327,7 @@ export default function App() {
       {authMode === 'signup' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
           <SignupForm
-            onSuccess={(u) => {
-              setUser(u);
-              setAuthMode(null);
-            }}
+            onSuccess={handleAuthSuccess}
             onSwitchToLogin={() => setAuthMode('login')}
             onClose={() => setAuthMode(null)}
           />

@@ -1,17 +1,20 @@
-import React from 'react';
-import { Home, Compass, Map, GraduationCap, Heart, Camera } from 'lucide-react';
-import type { ActiveTab } from '../types';
+import { Home, Compass, Map, GraduationCap, Heart, Camera, User, LogIn } from 'lucide-react';
+import type { ActiveTab, UserProfile } from '../types';
 
 interface MobileBottomNavProps {
   activeTab: ActiveTab;
   setActiveTab: (tab: ActiveTab) => void;
   savedCount: number;
+  user?: UserProfile | null;
+  onOpenAuth?: (mode: 'login' | 'signup') => void;
 }
 
 export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   activeTab,
   setActiveTab,
   savedCount,
+  user,
+  onOpenAuth,
 }) => {
   const tabs = [
     { id: 'home' as ActiveTab, label: 'Home', icon: Home },
@@ -49,6 +52,38 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           </button>
         );
       })}
+
+      {/* 7th Tab: Profile or Log In */}
+      <button
+        onClick={() => {
+          if (user) {
+            setActiveTab('profile');
+          } else if (onOpenAuth) {
+            onOpenAuth('login');
+          } else {
+            setActiveTab('profile');
+          }
+        }}
+        className={`relative flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all duration-150 ${
+          activeTab === 'profile'
+            ? 'text-emerald-400 font-bold'
+            : user
+              ? 'text-slate-400 hover:text-slate-200'
+              : 'text-emerald-400 hover:text-emerald-300 font-semibold'
+        }`}
+      >
+        {user ? (
+          <>
+            <User className={`w-5 h-5 ${activeTab === 'profile' ? 'scale-110 text-emerald-400' : ''}`} />
+            <span className="text-[10px] mt-0.5">{user.fullName.split(' ')[0]}</span>
+          </>
+        ) : (
+          <>
+            <LogIn className="w-5 h-5 text-emerald-400" />
+            <span className="text-[10px] mt-0.5 text-emerald-400 font-bold">Log In</span>
+          </>
+        )}
+      </button>
     </nav>
   );
 };

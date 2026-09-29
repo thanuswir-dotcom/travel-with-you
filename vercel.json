@@ -5,7 +5,11 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api"
+      "destination": "https://travel-with-you-backend.onrender.com/api/$1"
+    },
+    {
+      "source": "/api",
+      "destination": "https://travel-with-you-backend.onrender.com/api"
     },
     {
       "source": "/(.*)",
