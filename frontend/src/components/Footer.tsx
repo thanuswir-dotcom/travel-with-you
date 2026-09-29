@@ -43,7 +43,7 @@ export const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
 
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-[11px] text-emerald-400 font-semibold">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Project for “SHIP TO BUILD WITH AI” Hackathon</span>
+              <span>Smart AI Travel & Hangout Companion • All-India Edition</span>
             </div>
           </div>
 

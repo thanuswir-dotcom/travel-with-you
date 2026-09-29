@@ -123,11 +123,6 @@ export const PlannerPage: React.FC<PlannerPageProps> = ({ city }) => {
         <p className="text-slate-400 text-sm max-w-xl mx-auto">
           Tell the AI your budget, squad size, and time available — get a complete multi-stop itinerary with cost breakdown in seconds.
         </p>
-        {!isGeminiConfigured() && (
-          <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold">
-            ⚡ Demo Mode — Add your Gemini API key for live AI plans
-          </div>
-        )}
       </div>
 
       {/* Tab switcher */}
@@ -470,11 +465,9 @@ export const PlannerPage: React.FC<PlannerPageProps> = ({ city }) => {
                 Online • {city} Expert
               </div>
             </div>
-            {!isGeminiConfigured() && (
-              <span className="ml-auto text-[10px] px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 font-semibold">
-                Demo Mode
-              </span>
-            )}
+            <span className="ml-auto text-[10px] px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold">
+              AI Assistant
+            </span>
           </div>
 
           {/* Messages */}

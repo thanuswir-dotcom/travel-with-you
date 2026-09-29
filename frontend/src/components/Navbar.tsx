@@ -71,11 +71,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span className="text-lg sm:text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-amber-200 bg-clip-text text-transparent">
                   Travel With You
                 </span>
-                {isDemoMode && (
-                  <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-                    Judge Demo
-                  </span>
-                )}
               </div>
               <p className="text-[11px] text-amber-200/80 font-medium hidden sm:block tracking-wide">
                 Explore • Discover • Experience

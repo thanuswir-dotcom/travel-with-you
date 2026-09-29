@@ -30,7 +30,7 @@ import type { ActiveTab, AuthMode, LocationState, Place, UserProfile } from './t
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
   const [authMode, setAuthMode] = useState<AuthMode>(null);
-  const [isDemoMode] = useState(true);
+  const [isDemoMode] = useState(false);
 
   // Authenticated Student User state (Defaults to stored session or null so Log In is always available)
   const [user, setUser] = useState<UserProfile | null>(() => {
@@ -209,11 +209,13 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white">
       
-      {/* 1. Hackathon 3-Minute Demo Banner */}
-      <HackathonDemoBanner
-        setActiveTab={setActiveTab}
-        onTriggerSurprise={handleTriggerSurprise}
-      />
+      {/* 1. Hackathon 3-Minute Demo Banner (only if isDemoMode is enabled) */}
+      {isDemoMode && (
+        <HackathonDemoBanner
+          setActiveTab={setActiveTab}
+          onTriggerSurprise={handleTriggerSurprise}
+        />
+      )}
 
       {/* Location Toast Notification */}
       {locationNotification && (

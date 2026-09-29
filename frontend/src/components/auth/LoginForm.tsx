@@ -210,11 +210,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Judge 1-Click Demo Banner */}
+      {/* Quick 1-Click Guest Access */}
       <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-2 text-emerald-300 font-medium">
           <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
-          <span>Hackathon Judge Quick Access</span>
+          <span>Quick 1-Click Guest Access</span>
         </div>
         <button
           type="button"
