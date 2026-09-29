@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   User, Mail, School, MapPin, Heart, Compass, Camera, Wallet, 
-  Sparkles, ShieldCheck, Check, LogOut, Award, ChevronRight 
+  Sparkles, ShieldCheck, Check, LogOut, Award, ChevronRight, Upload, Trash2 
 } from 'lucide-react';
 import type { ActiveTab, UserProfile } from '../types';
 import { updateProfileBackend } from '../utils/api';
@@ -37,11 +37,13 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
   const [fullName, setFullName] = useState(user.fullName || 'Student Traveler');
   const [collegeName, setCollegeName] = useState(user.collegeName || 'Campus University');
   const [city, setCity] = useState(user.city || 'All India');
+  const [avatarUrl, setAvatarUrl] = useState<string>(user.avatarUrl || '');
   const [selectedVibes, setSelectedVibes] = useState<string[]>(
     user.preferredVibe || ['cafes', 'study_spots', 'street_food', 'photo_spots']
   );
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Dynamic user stats initialized to 0 for new accounts
   const [tripsPlannedCount, setTripsPlannedCount] = useState<number>(0);
@@ -117,12 +119,95 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
     if (user.collegeName) setCollegeName(user.collegeName);
     if (user.city) setCity(user.city);
     if (user.preferredVibe) setSelectedVibes(user.preferredVibe);
+    setAvatarUrl(user.avatarUrl || '');
   }, [user]);
 
   const toggleVibe = (id: string) => {
     setSelectedVibes(prev =>
       prev.includes(id) ? prev.filter(v => v !== id) : [...prev, id]
     );
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 8 * 1024 * 1024) {
+      alert('Please choose an image under 8MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_DIM = 400;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_DIM) {
+            height *= MAX_DIM / width;
+            width = MAX_DIM;
+          }
+        } else {
+          if (height > MAX_DIM) {
+            width *= MAX_DIM / height;
+            height = MAX_DIM;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        setAvatarUrl(dataUrl);
+
+        // Instant save if outside full edit mode
+        if (!isEditing) {
+          const updatedUser: UserProfile = {
+            ...user,
+            avatarUrl: dataUrl,
+          };
+          if (onUpdateUser) onUpdateUser(updatedUser);
+          updateProfileBackend({
+            id: user.id,
+            fullName: updatedUser.fullName,
+            collegeName: updatedUser.collegeName,
+            city: updatedUser.city,
+            preferredVibe: updatedUser.preferredVibe,
+            avatarUrl: dataUrl,
+          }).catch(() => {});
+          setSaveSuccess(true);
+          setTimeout(() => setSaveSuccess(false), 3000);
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemovePhoto = () => {
+    setAvatarUrl('');
+    if (!isEditing) {
+      const updatedUser: UserProfile = {
+        ...user,
+        avatarUrl: undefined,
+      };
+      if (onUpdateUser) onUpdateUser(updatedUser);
+      updateProfileBackend({
+        id: user.id,
+        fullName: updatedUser.fullName,
+        collegeName: updatedUser.collegeName,
+        city: updatedUser.city,
+        preferredVibe: updatedUser.preferredVibe,
+        avatarUrl: undefined,
+      }).catch(() => {});
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    }
   };
 
   const handleSaveProfile = async (e: React.FormEvent) => {
@@ -135,6 +220,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
       collegeName: collegeName.trim() || 'Campus University',
       city: city.trim() || 'All India',
       preferredVibe: selectedVibes,
+      avatarUrl: avatarUrl ? avatarUrl.trim() : undefined,
     };
 
     if (onUpdateUser) {
@@ -148,7 +234,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
         collegeName: updatedUser.collegeName,
         city: updatedUser.city,
         preferredVibe: updatedUser.preferredVibe,
-        avatarUrl: user.avatarUrl
+        avatarUrl: updatedUser.avatarUrl,
       });
     } catch (err) {
       console.warn('Profile save notice:', err);
@@ -170,11 +256,41 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
         <div className="relative z-10 flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
           {/* Avatar with Badge */}
           <div className="relative">
-            <img
-              src={user.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80'}
-              alt={fullName}
-              className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl object-cover ring-4 ring-emerald-500/30 shadow-xl"
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
             />
+
+            {/* Avatar: uploaded photo OR initials gradient */}
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={fullName}
+                className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl object-cover ring-4 ring-emerald-500/30 shadow-xl"
+              />
+            ) : (
+              <div
+                className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl ring-4 ring-emerald-500/30 shadow-xl flex items-center justify-center text-4xl sm:text-5xl font-black text-white select-none"
+                style={{ background: 'linear-gradient(135deg, #10b981 0%, #0d9488 50%, #0891b2 100%)' }}
+              >
+                {fullName.charAt(0).toUpperCase()}
+              </div>
+            )}
+
+            {/* Camera upload button overlay */}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="absolute -bottom-2 -left-2 p-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 hover:bg-emerald-500 hover:text-slate-950 hover:border-emerald-500 transition-all cursor-pointer shadow-lg"
+              title="Upload profile photo"
+            >
+              <Camera className="w-4 h-4" />
+            </button>
+
             <div className="absolute -bottom-2 -right-2 p-1.5 rounded-full bg-emerald-500 text-slate-950 font-bold" title="Verified College Student">
               <ShieldCheck className="w-4 h-4" />
             </div>
@@ -276,7 +392,53 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
       {isEditing && (
         <form onSubmit={handleSaveProfile} className="p-6 sm:p-8 rounded-3xl bg-slate-900 border border-emerald-500/30 shadow-xl space-y-4 mb-8 animate-in fade-in">
           <h3 className="text-lg font-bold text-white mb-2">Update Student Profile</h3>
-          
+
+          {/* Profile Photo Section */}
+          <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 flex flex-col sm:flex-row items-center gap-4">
+            <div className="shrink-0">
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt="Profile"
+                  className="w-16 h-16 rounded-2xl object-cover ring-2 ring-emerald-500/40"
+                />
+              ) : (
+                <div
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-black text-white ring-2 ring-emerald-500/40"
+                  style={{ background: 'linear-gradient(135deg, #10b981 0%, #0d9488 50%, #0891b2 100%)' }}
+                >
+                  {fullName.charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
+            <div className="flex-1 text-center sm:text-left">
+              <p className="text-xs font-semibold text-white mb-1">Profile Photo</p>
+              <p className="text-[11px] text-slate-400 mb-3">
+                {avatarUrl ? 'Your photo is set. You can change or remove it.' : 'No photo set yet. Upload a picture from your device.'}
+              </p>
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-[11px] font-semibold hover:bg-emerald-500/25 transition-colors cursor-pointer"
+                >
+                  <Upload className="w-3 h-3" />
+                  Upload Picture
+                </button>
+                {avatarUrl && (
+                  <button
+                    type="button"
+                    onClick={handleRemovePhoto}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-[11px] font-semibold hover:bg-rose-500/20 transition-colors cursor-pointer"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    Remove
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
               <label className="text-slate-400 block mb-1">Full Name</label>
@@ -319,7 +481,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
               type="submit"
               className="px-6 py-2 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs hover:bg-emerald-400 cursor-pointer"
             >
-              Save Changes
+              {isSaving ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </form>

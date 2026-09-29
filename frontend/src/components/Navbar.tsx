@@ -129,11 +129,20 @@ export const Navbar: React.FC<NavbarProps> = ({
                       : 'bg-slate-900 border-slate-800 text-slate-200 hover:border-slate-700'
                   }`}
                 >
-                  <img
-                    src={user.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'}
-                    alt={user.fullName}
-                    className="w-6 h-6 rounded-full object-cover"
-                  />
+                  {user.avatarUrl ? (
+                    <img
+                      src={user.avatarUrl}
+                      alt={user.fullName}
+                      className="w-6 h-6 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div
+                      className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black text-white shrink-0"
+                      style={{ background: 'linear-gradient(135deg, #10b981 0%, #0891b2 100%)' }}
+                    >
+                      {user.fullName.charAt(0).toUpperCase()}
+                    </div>
+                  )}
                   <span className="text-xs font-bold">{user.fullName.split(' ')[0]}</span>
                   <ChevronDown className="w-3 h-3 text-slate-400 ml-0.5" />
                 </button>
@@ -273,11 +282,20 @@ export const Navbar: React.FC<NavbarProps> = ({
             {user ? (
               <div className="flex items-center justify-between gap-2 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
                 <div className="flex items-center gap-2 truncate">
-                  <img
-                    src={user.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'}
-                    alt={user.fullName}
-                    className="w-7 h-7 rounded-full object-cover shrink-0"
-                  />
+                  {user.avatarUrl ? (
+                    <img
+                      src={user.avatarUrl}
+                      alt={user.fullName}
+                      className="w-7 h-7 rounded-full object-cover shrink-0"
+                    />
+                  ) : (
+                    <div
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black text-white shrink-0"
+                      style={{ background: 'linear-gradient(135deg, #10b981 0%, #0891b2 100%)' }}
+                    >
+                      {user.fullName.charAt(0).toUpperCase()}
+                    </div>
+                  )}
                   <div className="truncate">
                     <p className="text-xs font-bold text-white truncate">{user.fullName}</p>
                     <p className="text-[10px] text-slate-400 truncate">{user.email || user.phone || 'Student'}</p>
