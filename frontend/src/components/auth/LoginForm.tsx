@@ -115,8 +115,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         id: `usr-${cleanPhone}`,
         email: `student.${cleanPhone.slice(-4)}@campus.edu`,
         fullName: `Student Explorer (+91 ${cleanPhone.slice(-4)})`,
-        collegeName: 'RV College of Engineering',
-        city: 'Bengaluru',
+        collegeName: 'Student Explorer',
+        city: 'All India',
         preferredVibe: ['CHILL', 'BUDGET', 'COFFEE'],
       };
       onSuccess(fallbackUser);
@@ -147,8 +147,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         id: 'usr-student-1',
         email: email.trim(),
         fullName: email.split('@')[0].replace('.', ' ').replace(/^\w/, (c) => c.toUpperCase()),
-        collegeName: 'RV College of Engineering',
-        city: 'Bengaluru',
+        collegeName: 'Student Explorer',
+        city: 'All India',
         preferredVibe: ['CHILL', 'BUDGET', 'COFFEE'],
       };
       onSuccess(user);
@@ -173,8 +173,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         id: 'usr-google-demo',
         email: 'student@gmail.com',
         fullName: 'Student Traveler',
-        collegeName: 'RV College of Engineering',
-        city: 'Bengaluru',
+        collegeName: 'Student Explorer',
+        city: 'All India',
         preferredVibe: ['CHILL', 'COFFEE', 'STUDY']
       });
       onClose();
@@ -190,8 +190,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         id: 'usr-judge-demo',
         email: 'poojith.student@rvce.edu',
         fullName: 'Poojith (Student Explorer)',
-        collegeName: 'RV College of Engineering',
-        city: 'Bengaluru',
+        collegeName: 'Student Explorer',
+        city: 'All India',
         preferredVibe: ['CHILL', 'FOODIE', 'STUDY'],
       };
       onSuccess(user);

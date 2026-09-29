@@ -81,8 +81,8 @@ export const verifyOtp = (req, res) => {
       phone: phone.trim(),
       email: `student.${phone.slice(-4)}@campus.edu`,
       fullName: `Student Explorer (${phone.slice(-4)})`,
-      collegeName: 'RV College of Engineering',
-      city: 'Bengaluru',
+      collegeName: 'Student Explorer',
+      city: 'All India',
       avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
       preferredVibe: ['cafes', 'street_food', 'parks_nature'],
       token: `token-mobile-${Date.now()}`
@@ -109,8 +109,8 @@ export const googleLogin = (req, res) => {
       id: `usr-google-${Date.now()}`,
       email: userEmail,
       fullName: fullName || userEmail.split('@')[0].replace('.', ' ').replace(/^\w/, c => c.toUpperCase()),
-      collegeName: 'Campus University',
-      city: 'Bengaluru',
+      collegeName: 'Student Explorer',
+      city: 'All India',
       avatarUrl: avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
       preferredVibe: ['cafes', 'study_spots', 'photo_spots'],
       token: `token-google-${Date.now()}`

@@ -3,7 +3,6 @@ import {
   User, 
   Mail, 
   GraduationCap, 
-  MapPin, 
   Lock, 
   Eye, 
   EyeOff, 
@@ -30,7 +29,6 @@ export const SignupForm: React.FC<SignupFormProps> = ({
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [collegeName, setCollegeName] = useState('');
-  const [city, setCity] = useState('Bengaluru');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -80,8 +78,8 @@ export const SignupForm: React.FC<SignupFormProps> = ({
         id: `usr-${Date.now()}`,
         email: email.trim(),
         fullName: `${firstName.trim()} ${lastName.trim()}`,
-        collegeName: collegeName.trim() || 'College Explorer',
-        city,
+        collegeName: collegeName.trim() || 'Student Explorer',
+        city: 'All India',
         preferredVibe: ['BUDGET', 'CHILL'],
       };
       onSuccess(user);
@@ -132,43 +130,20 @@ export const SignupForm: React.FC<SignupFormProps> = ({
         </div>
       </div>
 
-      {/* College & City Row */}
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-            College / Campus
-          </label>
-          <div className="relative">
-            <GraduationCap className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={collegeName}
-              onChange={(e) => setCollegeName(e.target.value)}
-              placeholder="e.g. RVCE, PES, Christ"
-              className="w-full bg-slate-950/70 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-emerald-500/60"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-            City Hub
-          </label>
-          <div className="relative">
-            <MapPin className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-            <select
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              className="w-full bg-slate-950/70 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-white outline-none focus:border-emerald-500/60"
-            >
-              <option value="Bengaluru">Bengaluru</option>
-              <option value="Delhi NCR">Delhi NCR</option>
-              <option value="Mumbai">Mumbai</option>
-              <option value="Hyderabad">Hyderabad</option>
-              <option value="Pune">Pune</option>
-              <option value="Chennai">Chennai</option>
-            </select>
-          </div>
+      {/* College / Institute (Optional) */}
+      <div>
+        <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+          College / Campus / Institute <span className="text-slate-500 font-normal">(Optional)</span>
+        </label>
+        <div className="relative">
+          <GraduationCap className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={collegeName}
+            onChange={(e) => setCollegeName(e.target.value)}
+            placeholder="e.g. JNTU, PES, University, or College Name"
+            className="w-full bg-slate-950/70 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-emerald-500/60"
+          />
         </div>
       </div>
 

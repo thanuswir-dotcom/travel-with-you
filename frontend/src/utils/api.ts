@@ -174,8 +174,8 @@ export async function verifyPhoneOtp(phone: string, otp: string) {
         phone,
         email: `student.${phone.slice(-4)}@campus.edu`,
         fullName: `Student Explorer (${phone.slice(-4)})`,
-        collegeName: 'RV College of Engineering',
-        city: 'Bengaluru',
+        collegeName: 'Student Explorer',
+        city: 'All India',
         preferredVibe: ['CHILL', 'BUDGET', 'COFFEE']
       }
     };
@@ -199,8 +199,8 @@ export async function loginWithGoogle(email: string, fullName?: string, avatarUr
         id: `usr-google-${Date.now()}`,
         email,
         fullName: fullName || email.split('@')[0],
-        collegeName: 'RV College of Engineering',
-        city: 'Bengaluru',
+        collegeName: 'Student Explorer',
+        city: 'All India',
         preferredVibe: ['CHILL', 'COFFEE', 'STUDY']
       }
     };
