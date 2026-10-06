@@ -166,22 +166,33 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   };
 
   // Handle Google / Gmail 1-Click Login
+  // Note: Real Google OAuth should be wired here; this uses the email/name the user typed in.
   const handleGoogleLogin = async () => {
     setErrorMessage(null);
+    if (!email || !isValidEmail(email)) {
+      // Switch to the email method tab and let user fill in email first
+      setMethod('email');
+      setErrorMessage('Please enter your Gmail address first, then click Continue with Gmail.');
+      return;
+    }
     setLoading(true);
     try {
-      const res = await loginWithGoogle('poojith.student@gmail.com', 'Poojith Sharma');
+      const displayName = email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+      const res = await loginWithGoogle(email.trim().toLowerCase(), displayName);
       setLoading(false);
       if (res && res.success && res.user) {
         onSuccess(res.user);
         onClose();
+      } else {
+        setErrorMessage(res?.error || 'Google login failed. Please try again.');
       }
     } catch {
       setLoading(false);
+      const displayName = email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
       onSuccess({
-        id: 'usr-google-demo',
-        email: 'student@gmail.com',
-        fullName: 'Student Traveler',
+        id: `usr-google-${Date.now()}`,
+        email: email.trim().toLowerCase(),
+        fullName: displayName || 'Student Traveler',
         collegeName: 'Student Explorer',
         city: 'All India',
         preferredVibe: ['CHILL', 'COFFEE', 'STUDY']
@@ -190,15 +201,16 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     }
   };
 
-  // Instant 1-Click Demo Login for Hackathon Judges
+  // Instant 1-Click Guest Access — creates an anonymous guest session
   const handleQuickDemoLogin = () => {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
+      const guestId = `usr-guest-${Date.now()}`;
       const user: UserProfile = {
-        id: 'usr-judge-demo',
-        email: 'poojith.student@rvce.edu',
-        fullName: 'Poojith (Student Explorer)',
+        id: guestId,
+        email: `guest.${Date.now()}@travelwithyou.app`,
+        fullName: 'Guest Explorer',
         collegeName: 'Student Explorer',
         city: 'All India',
         preferredVibe: ['CHILL', 'FOODIE', 'STUDY'],

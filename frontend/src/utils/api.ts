@@ -3,6 +3,30 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL ||
     ? 'https://travel-with-you-backend.onrender.com/api' 
     : 'http://localhost:5000/api');
 
+// ─── Render Keep-Alive Ping ──────────────────────────────────────────────────
+// Render free-tier services sleep after 15 min of inactivity causing ~30s cold
+// starts. Ping the /health endpoint every 13 minutes to keep the server warm.
+function startKeepAlivePing() {
+  const pingUrl = 'https://travel-with-you-backend.onrender.com/api/health';
+  const pingInterval = 13 * 60 * 1000; // 13 minutes
+
+  const ping = () => {
+    fetch(pingUrl, { method: 'GET', signal: AbortSignal.timeout(8000) })
+      .catch(() => { /* silently ignore ping failures */ });
+  };
+
+  // Ping immediately on load (wakes server before user hits any API)
+  ping();
+  // Then ping on a recurring interval
+  setInterval(ping, pingInterval);
+}
+
+// Only run in browser, not SSR/test environments
+if (typeof window !== 'undefined') {
+  startKeepAlivePing();
+}
+
+
 export async function fetchPlaces(params: Record<string, string | number | boolean> = {}) {
   try {
     const url = new URL(`${BACKEND_URL}/places`);

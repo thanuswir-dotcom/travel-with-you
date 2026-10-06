@@ -64,7 +64,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onSuccess }) => {
               <span>Explore All 28 States & 8 Union Territories</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              {authMode === 'login' ? 'Welcome to Travel With Me' : 'Create Student Account'}
+              {authMode === 'login' ? 'Welcome to Travel With You' : 'Create Student Account'}
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-md mx-auto">
               {authMode === 'login' 

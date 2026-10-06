@@ -269,8 +269,16 @@ export const signup = async (req, res) => {
 };
 
 export const getMe = (req, res) => {
+  const { userId } = req.query;
+  if (!userId) {
+    return res.status(401).json({ error: 'Not authenticated.' });
+  }
   const db = readDB();
-  res.json(db.users[0]);
+  const user = db.users.find(u => u.id === userId);
+  if (!user) {
+    return res.status(404).json({ error: 'User not found.' });
+  }
+  res.json(user);
 };
 
 export const updateProfile = async (req, res) => {
